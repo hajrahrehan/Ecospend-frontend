@@ -1,15 +1,14 @@
-# HelloBank
+# Ecospend
 
 A modern digital banking frontend built using React.js, designed to provide a seamless, secure, and intuitive banking experience. This repository contains the complete frontend codebase for the HelloBank.com application.
 
 ## Team Members
 
-Section 6B – Web Programming
+Section 8C – Web Programming
 
 Name Roll No
-Muhammad Umar 22L-6592
-Abdullah Yasir 22I-0803
-Abdur Rafey 22L-7844
+Hajrah Rehan 22L-6810
+M Salman Amir 22L-6830
 
 ## Overview
 
