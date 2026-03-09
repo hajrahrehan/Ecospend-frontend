@@ -7,7 +7,7 @@ A modern digital banking frontend built using React.js, designed to provide a se
 Section 8C – Web Programming
 
 Name Roll No
-Hajrah Rehan 22L-6810
+Hajrah Rehan 22L-6810        
 M Salman Amir 22L-6830
 
 ## Overview
