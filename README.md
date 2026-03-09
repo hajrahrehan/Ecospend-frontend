@@ -1,4 +1,4 @@
-# Ecospend
+# Ecospend Frontend
 
 A modern digital banking frontend built using React.js, designed to provide a seamless, secure, and intuitive banking experience. This repository contains the complete frontend codebase for the HelloBank.com application.
 
