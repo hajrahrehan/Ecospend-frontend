@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  uniweb-frontend:
+    build:
+      context: .
+      args:
+        REACT_APP_BACKEND: https://web-backend.pak-school.com/
+    container_name: uniweb-frontend
+    restart: unless-stopped
+    ports:
+      - "6002:6002"
+    environment:
+      REACT_APP_BACKEND: https://web-backend.pak-school.com/
+    logging:
+      driver: "local"
+      options:
+        max-size: "10m"
+        max-file: "3"

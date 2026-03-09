@@ -1,0 +1,126 @@
+import React from "react";
+import { Route, Routes, Navigate, useLocation } from "react-router-dom";
+import PerfectScrollbar from "perfect-scrollbar";
+
+// core components
+import AdminNavbar from "components/Navbars/AdminNavbar.js";
+import Footer from "components/footer/Footer.js";
+import Sidebar from "components/sidebar/Sidebar.js";
+
+import routes from "routes.js";
+
+import logo from "assets/img/react-logo.png";
+import { BackgroundColorContext } from "contexts/BackgroundColorContext";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { AuthProtected } from "layouts/AuthProtected";
+
+var ps;
+
+function Auth(props) {
+  const location = useLocation();
+  const mainPanelRef = React.useRef(null);
+  const [sidebarOpened, setsidebarOpened] = React.useState(
+    document.documentElement.className.indexOf("nav-open") !== -1,
+  );
+  React.useEffect(() => {
+    if (navigator.platform.indexOf("Win") > -1) {
+      document.documentElement.className += " perfect-scrollbar-on";
+      document.documentElement.classList.remove("perfect-scrollbar-off");
+      ps = new PerfectScrollbar(mainPanelRef.current, {
+        suppressScrollX: true,
+      });
+      let tables = document.querySelectorAll(".table-responsive");
+      for (let i = 0; i < tables.length; i++) {
+        ps = new PerfectScrollbar(tables[i]);
+      }
+    }
+    // Specify how to clean up after this effect:
+    return function cleanup() {
+      if (navigator.platform.indexOf("Win") > -1) {
+        ps.destroy();
+        document.documentElement.classList.add("perfect-scrollbar-off");
+        document.documentElement.classList.remove("perfect-scrollbar-on");
+      }
+    };
+  });
+  React.useEffect(() => {
+    if (navigator.platform.indexOf("Win") > -1) {
+      let tables = document.querySelectorAll(".table-responsive");
+      for (let i = 0; i < tables.length; i++) {
+        ps = new PerfectScrollbar(tables[i]);
+      }
+    }
+    document.documentElement.scrollTop = 0;
+    document.scrollingElement.scrollTop = 0;
+    if (mainPanelRef.current) {
+      mainPanelRef.current.scrollTop = 0;
+    }
+  }, [location]);
+  // this function opens and closes the sidebar on small devices
+  const toggleSidebar = () => {
+    document.documentElement.classList.toggle("nav-open");
+    setsidebarOpened(!sidebarOpened);
+  };
+  const getRoutes = (routes) => {
+    return routes.map((prop, key) => {
+      if (prop.layout === "/main") {
+        return (
+          <Route path={prop.path} element={prop.component} key={key} exact />
+        );
+      } else {
+        return null;
+      }
+    });
+  };
+  const getBrandText = (path) => {
+    for (let i = 0; i < routes.length; i++) {
+      if (location.pathname.indexOf(routes[i].layout + routes[i].path) !== -1) {
+        return routes[i].name;
+      }
+    }
+    return "Brand";
+  };
+  return (
+    <AuthProtected>
+      <BackgroundColorContext.Consumer>
+        {({ color, changeColor }) => (
+          <React.Fragment>
+            <ToastContainer />
+            <div className="wrapper">
+              <Sidebar
+                routes={routes.filter((x) => !x.noSidebar)}
+                logo={{
+                  text: "Hello Bank",
+                  imgSrc: logo,
+                }}
+                toggleSidebar={toggleSidebar}
+              />
+              <div className="main-panel" ref={mainPanelRef} data={color}>
+                <AdminNavbar
+                  brandText={getBrandText(location.pathname)}
+                  toggleSidebar={toggleSidebar}
+                  sidebarOpened={sidebarOpened}
+                />
+                <Routes>
+                  {getRoutes(routes)}
+                  <Route
+                    path="/"
+                    element={<Navigate to="/main/dashboard" replace />}
+                  />
+                </Routes>
+                {
+                  // we don't want the Footer to be rendered on map page
+                  location.pathname === "/admin/maps" ? null : <Footer fluid />
+                }
+              </div>
+            </div>
+            {/* <FixedPlugin bgColor={color} handleBgClick={changeColor} /> */}
+          </React.Fragment>
+        )}
+      </BackgroundColorContext.Consumer>
+    </AuthProtected>
+  );
+}
+
+export default Auth;
