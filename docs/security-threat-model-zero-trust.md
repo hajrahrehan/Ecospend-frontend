@@ -146,22 +146,11 @@ Fix: Enforce backend authorization and verify roles before enabling admin UI.
 
 **4. OWASP Top 10 Mapping**
 
-- Broken Access Control
-  - Role determined by presence of `@admintoken` only.
-  - Admin routes protected only by client storage.
-
-- Sensitive Data Exposure
-  - Full card numbers and CVC shown in UI.
-
-- Identification and Authentication Failures
-  - Token mismatch between UI and API manager.
-  - No refresh or expiry handling.
-
-- Security Misconfiguration
-  - Public products route with auth-only API behavior.
-
-- Injection (XSS risk)
-  - Any injected script can exfiltrate `sessionStorage` tokens.
+- Broken Access Control: Role determined by presence of `@admintoken` only and admin routes protected only by client storage.
+- Sensitive Data Exposure: Full card numbers and CVC shown in UI.
+- Identification and Authentication Failures: Token mismatch between UI and API manager, no refresh or expiry handling.
+- Security Misconfiguration: Public products route with auth-only API behavior.
+- Injection (XSS risk): Any injected script can exfiltrate `sessionStorage` tokens.
 
 ---
 
@@ -191,7 +180,84 @@ Fix: Enforce backend authorization and verify roles before enabling admin UI.
 
 ---
 
-**6. Zero Trust Architecture Conversion**
+**6. Security Responsibility Split**
+
+**Frontend-Limited Security (Weak by Design)**
+
+These controls can be bypassed:
+
+- Route guards (`AuthProtected`, `AdminAuthProtected`)
+- Token presence checks in `sessionStorage`
+- UI-based role enforcement (admin vs user)
+- Hidden UI elements (buttons, menus)
+
+Conclusion: These are UX protections, not security controls.
+
+**Backend-Enforced Security (Required for Real Protection)**
+
+Must be enforced server-side:
+
+- Role validation (admin/user)
+- Token verification and signature validation
+- Access control on every API endpoint
+- Data exposure filtering (e.g., card masking)
+
+Conclusion: Frontend must assume the backend is the only trusted authority.
+
+---
+
+**7. Business Logic Attack Scenarios**
+
+**Transfer Abuse**
+
+- No visible frontend restriction on negative or extreme values.
+- Attacker can manipulate request payload directly.
+
+Risk: Financial manipulation if backend validation is weak.
+
+**Beneficiary Abuse**
+
+- No visible rate limiting or strict validation in frontend.
+- Attacker could add thousands of beneficiaries or attempt injection via names.
+
+Risk: Abuse of storage, operational overhead, or downstream injection if backend is weak.
+
+**Ticket Spam / DoS**
+
+- No throttling visible in frontend.
+- Attacker can flood ticket creation.
+
+Risk: Support workflow disruption and service degradation.
+
+**Product Purchase Replay**
+
+- If backend lacks idempotency keys, the same request can be replayed.
+
+Risk: Duplicate charges or inventory issues.
+
+---
+
+**8. Token Lifecycle Risks**
+
+- No expiration handling in the frontend.
+- No refresh token mechanism.
+- No logout invalidation strategy is visible.
+
+Exploit: A stolen token remains valid indefinitely from the frontend perspective.
+
+Fix: Implement short-lived access tokens, rotating refresh tokens, and auto-logout on expiry.
+
+---
+
+**9. Browser and Environment Threats**
+
+- Malicious browser extensions can read `sessionStorage` and intercept API calls.
+- DevTools manipulation can modify React state and inject tokens.
+- CSP is not enforced, increasing XSS risk.
+
+---
+
+**10. Zero Trust Architecture Conversion**
 
 **Current Issues**
 
@@ -222,7 +288,36 @@ Fix: Enforce backend authorization and verify roles before enabling admin UI.
 
 ---
 
-**7. Architecture Weaknesses**
+**11. Zero Trust Implementation (Concrete Plan)**
+
+**Step 1: Eliminate Implicit Trust**
+
+- Remove logic like `sessionStorage.getItem("@admintoken")` for role decisions.
+- Replace with verified role claims from backend responses.
+
+**Step 2: Introduce Auth Context Layer**
+
+- Create an `AuthProvider` that handles token storage, role decoding (JWT), expiry tracking, and auto logout.
+
+**Step 3: Enforce “Always Verify” API Calls**
+
+- Every request assumes the token may be invalid and the role may be insufficient.
+- Backend must reject unauthorized calls and return scoped permissions.
+
+**Step 4: Remove Sensitive Data From Frontend**
+
+- Never expose full card numbers or CVC.
+- Only show last 4 digits at most.
+
+**Step 5: Add Continuous Validation**
+
+- Validate session on route change.
+- Check auth validity on API responses.
+- Expire sessions on inactivity.
+
+---
+
+**12. Architecture Weaknesses**
 
 - `ApiManager` is a single trust boundary, but lacks schema validation and error classification.
 - Modal ref patterns can create hidden state transitions that are hard to reason about.
@@ -230,7 +325,7 @@ Fix: Enforce backend authorization and verify roles before enabling admin UI.
 
 ---
 
-**8. Risk Summary**
+**13. Risk Summary**
 
 **Top 10 Critical Risks**
 
@@ -257,7 +352,7 @@ Fix: Enforce backend authorization and verify roles before enabling admin UI.
 
 ---
 
-**9. Recommendations and Fix Roadmap**
+**14. Recommendations and Fix Roadmap**
 
 **Prioritized Fixes**
 
@@ -281,11 +376,16 @@ Fix: Enforce backend authorization and verify roles before enabling admin UI.
 
 ---
 
-**Attack Path Simulation (Real-World)**
+**15. Exploit Chain Example**
 
-- Attacker injects a script via any vulnerable dependency or unsafe HTML and steals `sessionStorage` tokens.
-- Attacker replays token to access admin routes and trigger `ApiManager.AdminIssueCard` or `AdminCloseAccount` calls.
-- Attacker scrapes full card numbers and CVCs from the cards list UI.
+1. Attacker injects a script (XSS or malicious extension).
+2. Script reads `sessionStorage.getItem("@admintoken")`.
+3. Token is exfiltrated to attacker server.
+4. Attacker reuses token via API client.
+5. Calls admin APIs (issue card, close account).
+6. Extracts card data (full number + CVC) from UI.
+
+Result: Account takeover and financial compromise.
 
 ---
 
