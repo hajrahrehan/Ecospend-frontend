@@ -5,9 +5,11 @@ import Transfer from "views/Transfer.js";
 import Statement from "views/Statement.js";
 import Cards from "views/Cards.js";
 import Tickets from "views/Tickets.js";
+import Chat from "views/Chat.js";
 // admin routes
 import AdminDashboard from "views/admin/AdminDashboard";
 import AdminUserList from "views/admin/AdminUserList";
+import AdminProducts from "views/admin/AdminProducts";
 var routes = [
   {
     path: "/dashboard",
@@ -58,6 +60,13 @@ var routes = [
     component: <Tickets />,
     layout: "/main",
   },
+  {
+    path: "/chat",
+    name: "EcoAI Chat",
+    icon: "fa fa-solid fa-robot",
+    component: <Chat />,
+    layout: "/main",
+  },
 
   // Admin Routes
 
@@ -73,6 +82,13 @@ var routes = [
     name: "User list",
     icon: "fa fa-solid fa-user",
     component: <AdminUserList />,
+    layout: "/admin",
+  },
+  {
+    path: "/products",
+    name: "Store Management",
+    icon: "fa fa-solid fa-store",
+    component: <AdminProducts />,
     layout: "/admin",
   },
 ];

@@ -26,7 +26,7 @@ ReactDOM.render(
         <Routes>
           <Route path="/auth" element={<NonAuthLayout />} />
           <Route path="/register" element={<NonAuthLayout />} />
-          <Route path="/admin-auth" element={<AdminSignIn />} />
+          <Route path="/admin-auth" element={<NonAuthLayout />} />
           <Route path="/products" element={<Products />} />
           <Route path="/main/*" element={<AuthLayout />} />
           <Route path="/admin/*" element={<AdminAuth />} />

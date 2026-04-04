@@ -8,7 +8,7 @@
 
 
     label{
-      color: rgba($white, 0.6);
+      color: rgba($black, 0.6);
     }
 
     .card-title {
@@ -24,14 +24,14 @@
       }
 
       .card-title{
-        color: $white;
+        color: $black;
         text-transform: inherit;
         font-weight: $font-weight-light;
         margin-bottom: .75rem;
       }
 
       .card-description, .card-category{
-        color: rgba($white, 0.6);
+        color: rgba($black, 0.6);
       }
 
     }
@@ -42,10 +42,10 @@
       }
       padding: 15px 15px 0;
       border: 0;
-      color: rgba($white,0.8);
+      color: rgba($black,0.8);
 
       .card-title{
-          color: $white;
+          color: $black;
           font-weight: 100;
       }
 

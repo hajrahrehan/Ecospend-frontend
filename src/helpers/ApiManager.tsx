@@ -189,3 +189,41 @@ export async function AdminAddMoney(id: string, body: { amount: number }) {
 export async function BuyCompanyProduct(body: any) {
   return CreateFetch("POST", "product/buy", body);
 }
+
+// ------------------- Chat -------------------
+export async function ChatWithAI(body: { message: string }) {
+  return CreateFetch("POST", "chat/message", body);
+}
+
+// ------------------- Recent Transactions -------------------
+export async function GetRecentTransactions() {
+  return CreateFetch("GET", "transaction/recent");
+}
+
+// ------------------- Spending Summary -------------------
+export async function GetSpendingSummary() {
+  return CreateFetch("GET", "user/spending-summary");
+}
+
+// ------------------- Products (Public) -------------------
+export async function GetProducts() {
+  return CreateFetch("GET", "product/", null, false);
+}
+
+// ------------------- Admin Products -------------------
+export async function AdminGetProducts() {
+  return CreateFetch("GET", "admin/products");
+}
+
+export async function AdminAddProduct(body: {
+  name: string;
+  description: string;
+  price: number;
+  image: string;
+}) {
+  return CreateFetch("POST", "admin/product", body);
+}
+
+export async function AdminDeleteProduct(id: string) {
+  return CreateFetch("DELETE", `admin/product/${id}`);
+}

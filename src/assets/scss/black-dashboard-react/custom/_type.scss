@@ -110,7 +110,7 @@ p{
 .card-category{
     text-transform: capitalize;
     font-weight: $font-weight-normal;
-    color: rgba($white, 0.6);
+    color: rgba($black, 0.6);
     font-size: $font-size-sm;
 }
 
@@ -160,7 +160,7 @@ p{
 }
 
 ul li, ol li{
-  color: $white;
+  color: $black;
 }
 
 pre{

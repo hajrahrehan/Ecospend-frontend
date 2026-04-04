@@ -62,14 +62,14 @@ $opacity-gray-5:             rgba(222,222,222, .5) !default;
 $opacity-gray-8:             rgba(222,222,222, .8) !default;
 
 
-$opacity-5:                  rgba(255,255,255, .5) !default;
-$opacity-6:                  rgba(255,255,255, .6) !default;
-$opacity-8:                  rgba(255,255,255, .8) !default;
+$opacity-5:                  rgba(58,58,58, .5) !default;
+$opacity-6:                  rgba(58,58,58, .6) !default;
+$opacity-8:                  rgba(58,58,58, .8) !default;
 
 
 
-$opacity-1:                  rgba(255,255,255, .1) !default;
-$opacity-2:                  rgba(255,255,255, .2) !default;
+$opacity-1:                  rgba(58,58,58, .1) !default;
+$opacity-2:                  rgba(58,58,58, .2) !default;
 
 
 // end beniamin
@@ -96,27 +96,27 @@ $colors: map-merge((
 $default-color-opacity:      rgba(182, 182, 182, .6) !default;
 $orange-color:               #f96332 !default;
 
-$default:       #344675 !default;
-$primary:       #e14eca !default;
+$default:       #5a6a7a !default;
+$primary:       #E8A0BF !default;
 $secondary:     #f4f5f7 !default;
-$success:       #00f2c3 !default;
-$info:          #1d8cf8 !default;
+$success:       #2dce89 !default;
+$info:          #D4849A !default;
 $warning:       #ff8d72 !default;
-$danger:        #fd5d93 !default;
-$black:         #222a42 !default;
+$danger:        #f5365c !default;
+$black:         #3a3a3a !default;
 
 
 // gradient
-$default-states:       #263148 !default;
-$primary-states:       #ba54f5 !default;
-$success-states:       #0098f0 !default;
-$info-states:          #3358f4 !default;
+$default-states:       #4a5a6a !default;
+$primary-states:       #D48BA8 !default;
+$success-states:       #24a46d !default;
+$info-states:          #C07388 !default;
 $warning-states:       #ff6491 !default;
-$danger-states:        #ec250d !default;
-$black-states:         #1d253b !default;
+$danger-states:        #d4213c !default;
+$black-states:         #2d2d2d !default;
 
-$background-black:           #1e1e2f !default;
-$background-states-black:    #1e1e24 !default;
+$background-black:           #fdf2f5 !default;
+$background-states-black:    #f8eaef !default;
 
 // opacity
 $default-opacity:      rgba(182, 182, 182, .6) !default;
@@ -740,7 +740,7 @@ $navbar-nav-link-letter-spacing:    0 !default;
 $navbar-nav-link-border-radius:     $border-radius !default;
 
 /* navbar color */
-$navbar-color:                      #1a1e34 !default;
+$navbar-color:                      #E8A0BF !default;
 $navbar-dark-bg:                    transparent !default;
 $navbar-dark-hover-bg:              rgba(255, 255, 255, .1);
 $navbar-dark-active-bg:             rgba(255, 255, 255, .1);
@@ -895,7 +895,7 @@ $card-border-color:                 rgba($black, .05);
 $card-inner-border-radius:          calc(#{$card-border-radius} - #{$card-border-width});
 $card-cap-bg:                       $gray-100 !default;
 $card-bg:                           $white !default;
-$card-black-background:             #27293d !default;
+$card-black-background:             #ffffff !default;
 $card-img-overlay-padding:          1.25rem !default;
 
 //$card-group-margin:                 ($grid-gutter-width / 2);

@@ -19,42 +19,64 @@ import {
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-import * as ApiManager from "../../helpers/ApiManager.tsx";
+import * as ApiManager from "helpers/ApiManager.tsx";
 import * as Yup from "yup";
 import { useFormik } from "formik";
 
 import { FormatNumber } from "helpers/utils.js";
 import moment from "moment";
 
+const defaultProducts = [
+  {
+    name: "IPhone 15",
+    price: 50000,
+    description: "The iPhone 15 series is Apple's latest model of smartphone, so this is where you want to be if you're interested in the latest and greatest from the world's most famous phone.",
+    image: "p1.png",
+  },
+  {
+    name: "Apple Airpods",
+    price: 5000,
+    description: "Apple's AirPods 2 brought wireless charging and hands-free Siri into the mix with longer call times and clearer audio. the AirPods are still at the top of the heap for iPhone owners.",
+    image: "p2.png",
+  },
+  {
+    name: "Samsung S95C OLED TV",
+    price: 100000,
+    description: "The Samsung S95C OLED TV is a premium and well-rounded TV that impressed in our benchmark testing across-the-board. Upgrades compared to the old model show Samsung is taking OLED seriously.",
+    image: "p3.png",
+  },
+  {
+    name: "Dell XPS 15",
+    price: 27000,
+    description: "this year's Dell XPS 15 OLED provides everything you are looking for in a notebook. Like its predecessors, the XPS 15 delivers a near-perfect balance of style, performance and portability.",
+    image: "p4.png",
+  },
+];
+
 function Products() {
   const [selected, setselected] = useState(null);
+  const [products, setProducts] = useState(defaultProducts);
 
-  const products = [
-    {
-      name: "IPhone 15",
-      price: 50000,
-      desc: "The iPhone 15 series is Apple's latest model of smartphone, so this is where you want to be if you're interested in the latest and greatest from the world's most famous phone.",
-      image: "p1.png",
-    },
-    {
-      name: "Apple Airpods",
-      price: 5000,
-      desc: "Apple's AirPods 2 brought wireless charging and hands-free Siri into the mix with longer call times and clearer audio. the AirPods are still at the top of the heap for iPhone owners.",
-      image: "p2.png",
-    },
-    {
-      name: "Samsung S95C OLED TV",
-      price: 100000,
-      desc: "The Samsung S95C OLED TV is a premium and well-rounded TV that impressed in our benchmark testing across-the-board. Upgrades compared to the old model show Samsung is taking OLED seriously.",
-      image: "p3.png",
-    },
-    {
-      name: "Dell XPS 15",
-      price: 27000,
-      desc: "this year's Dell XPS 15 OLED provides everything you are looking for in a notebook. Like its predecessors, the XPS 15 delivers a near-perfect balance of style, performance and portability.",
-      image: "p4.png",
-    },
-  ];
+  React.useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await ApiManager.GetProducts();
+        if (res && res.data && res.data.length > 0) {
+          setProducts(
+            res.data.map((p) => ({
+              name: p.name,
+              price: p.price,
+              description: p.description,
+              image: p.image || "p1.png",
+            })),
+          );
+        }
+      } catch (e) {
+        // fallback to defaults
+      }
+    };
+    fetchProducts();
+  }, []);
 
   const Checkout = () => {
     const [APIWorking, setAPIWorking] = useState(false);
@@ -261,7 +283,7 @@ function Products() {
               >
                 Rs. {FormatNumber(products[selected].price)}
               </CardSubtitle>
-              <CardText>{products[selected].desc}</CardText>
+              <CardText>{products[selected].description}</CardText>
             </CardBody>
           </Card>
         </Col>
@@ -284,7 +306,7 @@ function Products() {
         >
           <div className="text-center mt-2">
             <h4 className={"text-white fw-bold"}>
-              <b>Hello Bank Products</b>
+              <b>EcoSpend Products</b>
             </h4>
           </div>
         </div>
@@ -317,7 +339,7 @@ function Products() {
                       >
                         Rs. {FormatNumber(x.price)}
                       </CardSubtitle>
-                      <CardText>{x.desc}</CardText>
+                      <CardText>{x.description}</CardText>
                       <div className="text-center mt-3">
                         <Button color="info" onClick={() => setselected(i)}>
                           Buy Now

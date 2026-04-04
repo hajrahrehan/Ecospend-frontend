@@ -91,7 +91,7 @@ function Auth(props) {
               <Sidebar
                 routes={routes.filter((x) => !x.noSidebar)}
                 logo={{
-                  text: "Hello Bank",
+                  text: "EcoSpend",
                   imgSrc: logo,
                 }}
                 toggleSidebar={toggleSidebar}
