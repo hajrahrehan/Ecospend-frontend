@@ -1,0 +1,56 @@
+/* globals.css — inject at root level */
+:root {
+  /* Space palette */
+  --eco-void:         #00000F;   /* absolute deep space */
+  --eco-nebula:       #050A1A;   /* surface background */
+  --eco-station:      #0A1628;   /* elevated surfaces */
+  --eco-hull:         #0F1F3A;   /* card backgrounds */
+  
+  /* Energy colors */
+  --eco-quantum:      #00D4FF;   /* primary cyan — quantum energy */
+  --eco-plasma:       #7B4FFF;   /* purple — plasma/debt */
+  --eco-solar:        #FFB830;   /* gold — wealth/XP */
+  --eco-nova:         #00FF87;   /* green — income/success */
+  --eco-pulsar:       #FF3B6B;   /* red — danger/expense */
+  --eco-antimatter:   #FF6B35;   /* orange — warning */
+  
+  /* Glows (use on box-shadow only) */
+  --glow-quantum:     0 0 20px rgba(0, 212, 255, 0.4),
+                      0 0 60px rgba(0, 212, 255, 0.15);
+  --glow-solar:       0 0 20px rgba(255, 184, 48, 0.5),
+                      0 0 60px rgba(255, 184, 48, 0.2);
+  --glow-nova:        0 0 20px rgba(0, 255, 135, 0.4),
+                      0 0 60px rgba(0, 255, 135, 0.15);
+  --glow-pulsar:      0 0 20px rgba(255, 59, 107, 0.4),
+                      0 0 60px rgba(255, 59, 107, 0.15);
+  
+  /* Typography */
+  --font-display:     'Rajdhani', 'Orbitron', sans-serif;
+  --font-data:        'JetBrains Mono', 'Fira Code', monospace;
+  --font-body:        'Inter', 'DM Sans', sans-serif;
+  
+  /* Physics easing curves */
+  --spring-overshoot: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --spring-snap:      cubic-bezier(0.16, 1, 0.3, 1);
+  --spring-bounce:    cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --warp-curve:       cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Import space fonts */
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;700&family=JetBrains+Mono:wght@300;400&display=swap');
+
+/* Scanline texture overlay on every screen */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 212, 255, 0.01) 2px,
+    rgba(0, 212, 255, 0.01) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}

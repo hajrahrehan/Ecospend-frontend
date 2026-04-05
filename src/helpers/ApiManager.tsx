@@ -1,6 +1,7 @@
 import { toast } from "react-toastify";
+import { localApi } from "../data/localApi";
 
-// 🌟 Universal Fetch Wrapper
+// 🌟 Local Data Wrapper (Backend-free)
 const CreateFetch = async (
   method: string,
   link: string,
@@ -9,24 +10,7 @@ const CreateFetch = async (
   noError = false,
 ) => {
   try {
-    const token = istoken ? sessionStorage.getItem("@token") : null;
-
-    const requestOptions: any = {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      ...(body ? { body: JSON.stringify(body) } : {}),
-    };
-
-    const base = process.env.REACT_APP_BACKEND?.endsWith("/")
-      ? process.env.REACT_APP_BACKEND
-      : process.env.REACT_APP_BACKEND + "/";
-
-    const res = await fetch(base + link, requestOptions);
-    const json = await res.json();
+    const json = await localApi.request(method, link, body || undefined);
 
     if (json.status === "fail" && !noError) {
       toast.error(json.message || "Something went wrong");
@@ -89,7 +73,7 @@ export async function UserInfo() {
 }
 
 export async function UserCards() {
-  return CreateFetch("GET", "user");
+  return CreateFetch("GET", "user/cards");
 }
 
 export async function UpdateEmail(body: { email: string }) {
