@@ -3,11 +3,16 @@ import { useEffect, useRef, useTransition } from 'react'
 let sharedPhysicsWorker = null
 let sharedCanvasWorker = null
 
-const getPhysicsWorker = () => {
+const getPhysicsWorker = (config) => {
   if (typeof Worker !== 'undefined') {
     if (!sharedPhysicsWorker) {
       sharedPhysicsWorker = new Worker(new URL('../workers/quantumPhysics.worker.js', import.meta.url))
-      sharedPhysicsWorker.postMessage({ type: 'INIT', payload: { maxParticles: 1200, startParticles: 800 } })
+      const payload = {
+        maxParticles: config?.maxParticles || 1200,
+        startParticles: config?.startParticles || 800,
+        tickRate: config?.tickRate || 30,
+      }
+      sharedPhysicsWorker.postMessage({ type: 'INIT', payload })
       
       sharedPhysicsWorker.onmessage = (e) => {
         const { type, payload } = e.data
@@ -17,6 +22,8 @@ const getPhysicsWorker = () => {
           })
         }
       }
+    } else if (config) {
+      sharedPhysicsWorker.postMessage({ type: 'SET_PERF', payload: config })
     }
   }
   return sharedPhysicsWorker
@@ -34,9 +41,15 @@ export const getCanvasWorker = () => {
 /**
  * useQuantumWorker hooks into shared physics worker
  */
-export const useQuantumWorker = () => {
+export const useQuantumWorker = (config) => {
   const [isPending, startTransition] = useTransition()
-  const workerRef = useRef(getPhysicsWorker())
+  const workerRef = useRef(getPhysicsWorker(config))
+
+  useEffect(() => {
+    if (config && workerRef.current) {
+      workerRef.current.postMessage({ type: 'SET_PERF', payload: config })
+    }
+  }, [config?.maxParticles, config?.startParticles, config?.tickRate])
 
   useEffect(() => {
     // If reduced motion is explicitly toggled
