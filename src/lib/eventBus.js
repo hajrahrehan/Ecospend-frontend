@@ -1,4 +1,5 @@
 import mitt from 'mitt'
+import { getEventBatchInterval } from '../perf/performanceGovernor'
 
 /**
  * Canonical event names for the EcoSpend quantum bus.
@@ -19,4 +20,32 @@ export const eventBus = mitt()
 // Bind to window for easy debugging if necessary
 if (process.env.NODE_ENV === 'development') {
   window.__ECO_BUS__ = eventBus
+}
+
+let pendingQuantumTick = null
+let quantumTickTimer = null
+let lastQuantumEmit = 0
+
+export const emitQuantumTick = (payload) => {
+  pendingQuantumTick = payload
+  const interval = getEventBatchInterval()
+  const now = performance.now()
+  const elapsed = now - lastQuantumEmit
+
+  if (elapsed >= interval && !quantumTickTimer) {
+    lastQuantumEmit = now
+    eventBus.emit(EVENTS.QUANTUM_TICK, pendingQuantumTick)
+    pendingQuantumTick = null
+    return
+  }
+
+  if (!quantumTickTimer) {
+    quantumTickTimer = setTimeout(() => {
+      quantumTickTimer = null
+      if (!pendingQuantumTick) return
+      lastQuantumEmit = performance.now()
+      eventBus.emit(EVENTS.QUANTUM_TICK, pendingQuantumTick)
+      pendingQuantumTick = null
+    }, Math.max(0, interval - elapsed))
+  }
 }

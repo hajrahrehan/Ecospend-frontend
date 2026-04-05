@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useGamificationStore } from '../store/gamification'
+import { shouldRunHeavyEffect, subscribeToPerformanceChanges } from '../perf/performanceGovernor'
 
 const QuantumHUD = () => {
   const { level, xpProgress, xpToNext, streak, pendingXP, clearPendingXP } = useGamificationStore()
   const [showXPGain, setShowXPGain] = useState(null)
+  const [canBlur, setCanBlur] = useState(() => shouldRunHeavyEffect('backdropBlur'))
 
   useEffect(() => {
     if (!pendingXP) return
@@ -14,12 +16,19 @@ const QuantumHUD = () => {
     return () => clearTimeout(t)
   }, [pendingXP, clearPendingXP])
 
+  useEffect(() => {
+    const unsub = subscribeToPerformanceChanges(() => {
+      setCanBlur(shouldRunHeavyEffect('backdropBlur'))
+    })
+    return () => unsub()
+  }, [])
+
   return (
     <div style={{
       position: 'fixed', bottom: 24, left: 24, zIndex: 1000,
       display: 'flex', alignItems: 'center', gap: 12,
       background: 'rgba(5,10,20,0.85)',
-      backdropFilter: 'blur(16px)',
+      backdropFilter: canBlur ? 'blur(16px)' : 'none',
       border: '1px solid rgba(0,212,255,0.15)',
       borderRadius: 999, padding: '8px 16px',
     }}>

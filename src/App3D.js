@@ -16,7 +16,7 @@ import ThemeContextWrapper from "./components/ThemeWrapper/ThemeWrapper";
 import BackgroundColorWrapper from "./components/BackgroundColorWrapper/BackgroundColorWrapper";
 import MainShell from "./components/MainShell";
 import { QuantumBackground } from "./components/QuantumBackground";
-import { getPerfTier } from "./lib/perfTier";
+import { getPerformanceTier, subscribeToPerformanceChanges } from "./perf/performanceGovernor";
 
 const DashboardPage = lazy(() => import('./pages/Dashboard'))
 const TransferPage = lazy(() => import('./pages/Transfer'))
@@ -28,7 +28,13 @@ const CardsPage = lazy(() => import('./pages/Cards'))
 const AdminPortalPage = lazy(() => import('./pages/AdminPortal'))
 const SignUpPage = lazy(() => import('./pages/SignUp'))
 const App3D = () => {
-  const [tier] = useState(() => getPerfTier())
+  const [tier, setTier] = useState(() => getPerformanceTier())
+
+  React.useEffect(() => {
+    return subscribeToPerformanceChanges((state) => {
+      setTier(state.tier)
+    })
+  }, [])
 
   return (
     <ThemeContextWrapper>

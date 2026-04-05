@@ -1,7 +1,19 @@
 import { useEffect, useRef, useTransition } from 'react'
+import { emitQuantumTick } from '../lib/eventBus'
+import { getFrameBudget, getTickRate, subscribeToPerformanceChanges } from '../perf/performanceGovernor'
 
 let sharedPhysicsWorker = null
 let sharedCanvasWorker = null
+let canvasPerfUnsub = null
+
+const syncCanvasWorkerPerf = () => {
+  if (!sharedCanvasWorker) return
+  const budget = getFrameBudget()
+  sharedCanvasWorker.postMessage({
+    type: 'SET_FPS',
+    payload: { fps: budget.canvasFps, reducedFps: budget.canvasFpsReduced },
+  })
+}
 
 const getPhysicsWorker = (config) => {
   if (typeof Worker !== 'undefined') {
@@ -10,16 +22,14 @@ const getPhysicsWorker = (config) => {
       const payload = {
         maxParticles: config?.maxParticles || 1200,
         startParticles: config?.startParticles || 800,
-        tickRate: config?.tickRate || 30,
+        tickRate: config?.tickRate || getTickRate(),
       }
       sharedPhysicsWorker.postMessage({ type: 'INIT', payload })
       
       sharedPhysicsWorker.onmessage = (e) => {
         const { type, payload } = e.data
         if (type === 'QUANTUM_TICK') {
-          import('../lib/eventBus').then(({ eventBus, EVENTS }) => {
-            eventBus.emit(EVENTS.QUANTUM_TICK, payload)
-          })
+          emitQuantumTick(payload)
         }
       }
     } else if (config) {
@@ -33,6 +43,10 @@ export const getCanvasWorker = () => {
   if (typeof Worker !== 'undefined') {
     if (!sharedCanvasWorker) {
       sharedCanvasWorker = new Worker(new URL('../workers/canvas2d.worker.js', import.meta.url))
+      syncCanvasWorkerPerf()
+      if (!canvasPerfUnsub) {
+        canvasPerfUnsub = subscribeToPerformanceChanges(() => syncCanvasWorkerPerf())
+      }
     }
   }
   return sharedCanvasWorker

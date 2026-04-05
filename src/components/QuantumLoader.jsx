@@ -1,12 +1,15 @@
-import React, { useEffect, useRef, memo } from 'react'
+import React, { useEffect, useRef, memo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { getCanvasWorker } from '../hooks/useQuantumWorker'
+import { shouldRunHeavyEffect, subscribeToPerformanceChanges } from '../perf/performanceGovernor'
 
 // For page-level loading — wave collapse visualization
 export const WaveCollapseLoader = memo(({ label = 'INITIALIZING SESSION' }) => {
   const canvasRef = useRef()
+  const [canRunWave, setCanRunWave] = useState(() => shouldRunHeavyEffect('canvasWave'))
 
   useEffect(() => {
+    if (!canRunWave) return
     const canvas = canvasRef.current
     const worker = getCanvasWorker()
     
@@ -21,11 +24,18 @@ export const WaveCollapseLoader = memo(({ label = 'INITIALIZING SESSION' }) => {
     }
 
     return () => worker?.postMessage({ type: 'STOP', id: 'loaderWave' })
+  }, [canRunWave])
+
+  useEffect(() => {
+    const unsub = subscribeToPerformanceChanges(() => {
+      setCanRunWave(shouldRunHeavyEffect('canvasWave'))
+    })
+    return () => unsub()
   }, [])
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-      <canvas ref={canvasRef} width={200} height={40} />
+      <canvas ref={canvasRef} width={200} height={40} style={{ display: canRunWave ? 'block' : 'none' }} />
       <motion.p
         animate={{ opacity: [0.4, 1, 0.4] }}
         transition={{ duration: 1.5, repeat: Infinity }}

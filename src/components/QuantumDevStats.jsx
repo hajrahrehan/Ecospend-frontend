@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { eventBus, EVENTS } from '../lib/eventBus'
+import { shouldRunHeavyEffect, subscribeToPerformanceChanges } from '../perf/performanceGovernor'
 
 const QuantumDevStats = () => {
   const [stats, setStats] = useState({ fps: 0, particles: 0, workerMs: 0, mainMs: 0 })
@@ -8,6 +9,14 @@ const QuantumDevStats = () => {
   const lastParticlesRef = useRef(0)
   const lastWorkerMsRef = useRef(0)
   const lastMainMsRef = useRef(0)
+  const [canBlur, setCanBlur] = useState(() => shouldRunHeavyEffect('backdropBlur'))
+
+  useEffect(() => {
+    const unsub = subscribeToPerformanceChanges(() => {
+      setCanBlur(shouldRunHeavyEffect('backdropBlur'))
+    })
+    return () => unsub()
+  }, [])
 
   useEffect(() => {
     const onTick = (payload) => {
@@ -47,7 +56,7 @@ const QuantumDevStats = () => {
         borderRadius: 10,
         background: 'rgba(5,10,20,0.75)',
         border: '1px solid rgba(0,212,255,0.2)',
-        backdropFilter: 'blur(10px)',
+        backdropFilter: canBlur ? 'blur(10px)' : 'none',
         fontFamily: 'var(--font-data)',
         fontSize: 10,
         color: 'rgba(0,212,255,0.9)',

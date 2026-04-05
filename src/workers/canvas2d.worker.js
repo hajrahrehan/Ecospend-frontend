@@ -5,6 +5,21 @@ import { waveProbability } from '../lib/physics'
 let offscreenCtxMap = new Map() // canvasId -> ctx
 let frameLoops = new Map()      // canvasId -> state & raf
 let isReducedMotion = false
+let fpsNormal = 28
+let fpsReduced = 20
+const getFrameInterval = () => 1000 / (isReducedMotion ? fpsReduced : fpsNormal)
+
+const shouldRenderFrame = (state) => {
+  const now = performance.now()
+  const interval = getFrameInterval()
+  if (!state.lastFrameTime) {
+    state.lastFrameTime = now
+    return true
+  }
+  if (now - state.lastFrameTime < interval) return false
+  state.lastFrameTime = now
+  return true
+}
 
 const stopLoop = (id) => {
   if (frameLoops.has(id)) {
@@ -16,6 +31,13 @@ const stopLoop = (id) => {
 const drawBalanceWell = (id, state) => {
   const ctx = offscreenCtxMap.get(id)
   if (!ctx) return
+  if (!shouldRenderFrame(state)) {
+    const loopState = frameLoops.get(id)
+    if (loopState) {
+      loopState.raf = requestAnimationFrame(() => drawBalanceWell(id, state))
+    }
+    return
+  }
   
   const ctxCanvas = ctx.canvas
   const w = ctxCanvas.width, h = ctxCanvas.height
@@ -43,6 +65,13 @@ const drawBalanceWell = (id, state) => {
 const drawBeam = (id, state) => {
   const ctx = offscreenCtxMap.get(id)
   if (!ctx || !state.particles) return
+  if (!shouldRenderFrame(state)) {
+    const loopState = frameLoops.get(id)
+    if (loopState && state.time < 3) {
+      loopState.raf = requestAnimationFrame(() => drawBeam(id, state))
+    }
+    return
+  }
   
   const ctxCanvas = ctx.canvas
   const W = ctxCanvas.width, H = ctxCanvas.height
@@ -84,6 +113,13 @@ const drawBeam = (id, state) => {
 const drawWave = (id, state) => {
   const ctx = offscreenCtxMap.get(id)
   if (!ctx) return
+  if (!shouldRenderFrame(state)) {
+    const loopState = frameLoops.get(id)
+    if (loopState) {
+      loopState.raf = requestAnimationFrame(() => drawWave(id, state))
+    }
+    return
+  }
   
   const canvas = ctx.canvas
   ctx.clearRect(0, 0, canvas.width, canvas.height)
@@ -116,29 +152,39 @@ self.onmessage = (e) => {
       break
     case 'START_BALANCE_WELL':
       stopLoop(id)
-      frameLoops.set(id, { time: 0 })
-      drawBalanceWell(id, { time: 0, energy: payload.energy })
+      {
+        const state = { time: 0, energy: payload.energy, lastFrameTime: 0 }
+        frameLoops.set(id, state)
+        drawBalanceWell(id, state)
+      }
       break
     case 'START_BEAM': {
       stopLoop(id)
       const state = { time: 0, particles: Array.from({ length: 60 }, (_, i) => ({
         delay: i * 0.02, phase: (Math.random() - 0.5) * 0.4, amp: (Math.random() - 0.5) * 30,
         omega: 8 + Math.random() * 4, speed: 0.4 + Math.random() * 0.3, size: Math.random() * 3 + 1,
-      }))}
+      })), lastFrameTime: 0 }
       frameLoops.set(id, state)
       drawBeam(id, state)
       break
     }
     case 'START_WAVE':
       stopLoop(id)
-      frameLoops.set(id, { time: 0 })
-      drawWave(id, { time: 0 })
+      {
+        const state = { time: 0, lastFrameTime: 0 }
+        frameLoops.set(id, state)
+        drawWave(id, state)
+      }
       break
     case 'STOP':
       stopLoop(id)
       break
     case 'SET_REDUCED_MOTION':
       isReducedMotion = payload.reduced
+      break
+    case 'SET_FPS':
+      fpsNormal = Math.max(8, payload?.fps || fpsNormal)
+      fpsReduced = Math.max(6, payload?.reducedFps || fpsReduced)
       break
     default:
       break

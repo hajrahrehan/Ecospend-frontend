@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { getCanvasWorker } from '../hooks/useQuantumWorker'
 import { eventBus, EVENTS } from '../lib/eventBus'
 import * as ApiManager from '../helpers/ApiManager.tsx'
+import { shouldRunHeavyEffect, subscribeToPerformanceChanges } from '../perf/performanceGovernor'
 
 const TransferStepTrail = ({ currentStep }) => {
   return (
@@ -31,6 +32,7 @@ const TransferPage = () => {
   const beamCanvasRef = useRef()
   const workerRef = useRef()
   const [, startTransition] = useTransition()
+  const [canRunBeam, setCanRunBeam] = useState(() => shouldRunHeavyEffect('beam'))
   const [user, setUser] = useState(null)
   const [beneficiaries, setBeneficiaries] = useState([])
   const [selectedBen, setSelectedBen] = useState(null)
@@ -47,6 +49,27 @@ const TransferPage = () => {
     }
     load()
     return () => { isActive = false }
+  }, [])
+  
+  useEffect(() => {
+    const unsub = subscribeToPerformanceChanges(() => {
+      setCanRunBeam(shouldRunHeavyEffect('beam'))
+    })
+    return () => unsub()
+  }, [])
+
+  useEffect(() => {
+    if (!canRunBeam) {
+      workerRef.current?.postMessage({ type: 'STOP', id: 'beam' })
+    }
+  }, [canRunBeam])
+  
+  useEffect(() => {
+    return () => {
+      if (workerRef.current) {
+        workerRef.current.postMessage({ type: 'STOP', id: 'beam' })
+      }
+    }
   }, [])
 
   // Particle beam animation — fires on confirm using worker
@@ -67,6 +90,20 @@ const TransferPage = () => {
     setError('')
     setBeamFiring(true)
     setTimeout(() => {
+      if (!canRunBeam) {
+        // Skip beam effect on low tier, keep flow intact
+        setTimeout(() => {
+          startTransition(async () => {
+            await ApiManager.TransferToBeneficiary(selectedBen._id, { amount: amountNum })
+            const res = await ApiManager.UserInfo()
+            setUser(res?.data?.user || user)
+            eventBus.emit(EVENTS.XP_GAIN, { action: 'TRANSFER' })
+            setBeamFiring(false)
+            setStep(4)
+          })
+        }, 3000)
+        return
+      }
       const canvas = beamCanvasRef.current
       if (canvas && !workerRef.current && typeof canvas.transferControlToOffscreen === 'function') {
         const offscreen = canvas.transferControlToOffscreen()
@@ -102,7 +139,7 @@ const TransferPage = () => {
       <TransferStepTrail currentStep={step} />
       
       {/* Transfer animation canvas — shown during transfer */}
-      {beamFiring && (
+      {beamFiring && canRunBeam && (
         <canvas
           ref={beamCanvasRef}
           width={520} height={80}

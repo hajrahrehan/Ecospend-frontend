@@ -4,6 +4,7 @@ import { useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { useQuantumWorker } from '../hooks/useQuantumWorker'
 import { eventBus, EVENTS } from '../lib/eventBus'
+import { getTickRate, shouldRunHeavyEffect } from '../perf/performanceGovernor'
 
 const QuantumFieldFX = lazy(() => import('./QuantumFieldFX'))
 
@@ -25,7 +26,7 @@ const QuantumField = ({ maxCount = 1200, initialCount = 800, performanceLevel = 
   const { worker } = useQuantumWorker({
     maxParticles: cappedMaxCount,
     startParticles: cappedInitialCount,
-    tickRate: 30,
+    tickRate: getTickRate(),
   })
 
   const { phases, sizes, timeRef } = useMemo(() => {
@@ -142,8 +143,10 @@ const QuantumField = ({ maxCount = 1200, initialCount = 800, performanceLevel = 
 
   return (
     <>
-      {/* Deep star field — galactic background */}
-      <Stars radius={100} depth={60} count={1200} factor={2} saturation={0.2} fade speed={reducedMotion ? 0.1 : 0.3} />
+      {/* Deep star field — galactic background (high tier only) */}
+      {shouldRunHeavyEffect('stars') ? (
+        <Stars radius={100} depth={60} count={1200} factor={2} saturation={0.2} fade speed={reducedMotion ? 0.1 : 0.3} />
+      ) : null}
       
       {/* Quantum particle cloud */}
       <points ref={mesh} geometry={geometry} material={material} />

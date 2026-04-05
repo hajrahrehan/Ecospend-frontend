@@ -4,6 +4,7 @@ import React from 'react'
 import toast from 'react-hot-toast'
 import { motion } from 'framer-motion'
 import { useGamificationStore, XP_TABLE } from '../store/gamification'
+import { shouldRunHeavyEffect } from '../perf/performanceGovernor'
 
 const TOAST_TYPES = {
   success: { border: 'var(--eco-nova)',      icon: '◈', xp: true  },
@@ -16,6 +17,7 @@ const TOAST_TYPES = {
 export const quantumToast = (message, type = 'info', xpAction = null) => {
   const cfg = TOAST_TYPES[type]
   if (xpAction) useGamificationStore.getState().addXP(xpAction)
+  const canBlur = shouldRunHeavyEffect('backdropBlur')
   
   toast.custom(
     (t) => (
@@ -25,7 +27,7 @@ export const quantumToast = (message, type = 'info', xpAction = null) => {
         transition={{ type: 'spring', stiffness: 300, damping: 24 }}
         style={{
           background: 'rgba(5,10,20,0.95)',
-          backdropFilter: 'blur(20px)',
+          backdropFilter: canBlur ? 'blur(20px)' : 'none',
           border: `1px solid ${cfg.border}30`,
           borderLeft: `3px solid ${cfg.border}`,
           borderRadius: 10,

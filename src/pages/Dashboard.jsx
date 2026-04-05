@@ -6,14 +6,27 @@ import { useNavigate } from 'react-router-dom'
 
 import { getCanvasWorker } from '../hooks/useQuantumWorker'
 import * as ApiManager from '../helpers/ApiManager.tsx'
+import { shouldRunHeavyEffect, subscribeToPerformanceChanges } from '../perf/performanceGovernor'
 
 // ─── Balance Gravity Well — the centrepiece (OffscreenCanvas) ────────────────
-const BalanceGravityWell = memo(({ balance }) => {
+const BalanceGravityWell = memo(({ balance, canRunWell }) => {
   const energy = wealthEnergy(balance)
   const canvasRef = useRef()
   const workerRef = useRef()
 
   useEffect(() => {
+    if (!canRunWell) {
+      if (canvasRef.current) {
+        const ctx = canvasRef.current.getContext('2d')
+        if (ctx) {
+          ctx.clearRect(0, 0, 340, 240)
+          ctx.fillStyle = '#00D4FF11'
+          ctx.fillRect(0, 0, 340, 240)
+        }
+      }
+      workerRef.current?.postMessage({ type: 'STOP', id: 'gravityWell' })
+      return
+    }
     // Only init transfer once
     if (canvasRef.current && !workerRef.current && typeof canvasRef.current.transferControlToOffscreen === 'function') {
       const offscreen = canvasRef.current.transferControlToOffscreen()
@@ -39,7 +52,7 @@ const BalanceGravityWell = memo(({ balance }) => {
         workerRef.current.postMessage({ type: 'STOP', id: 'gravityWell' })
       }
     }
-  }, [energy])
+  }, [energy, canRunWell])
 
   return (
     <canvas ref={canvasRef} width={340} height={240}
@@ -152,6 +165,7 @@ const TransactionCollisionLog = memo(({ transactions }) => (
 
 const DashboardPage = () => {
   const [, startTransition] = useTransition()
+  const [canRunWell, setCanRunWell] = useState(() => shouldRunHeavyEffect('balanceWell'))
   const [user, setUser] = useState(null)
   const [transactions, setTransactions] = useState([])
   const navigate = useNavigate()
@@ -178,10 +192,17 @@ const DashboardPage = () => {
     fetchData()
     return () => { isActive = false }
   }, [])
+
+  useEffect(() => {
+    const unsub = subscribeToPerformanceChanges(() => {
+      setCanRunWell(shouldRunHeavyEffect('balanceWell'))
+    })
+    return () => unsub()
+  }, [])
   
   return (
     <div style={{ maxWidth: '700px', margin: '0 auto' }}>
-      <BalanceGravityWell balance={user?.balance || 0} />
+      <BalanceGravityWell balance={user?.balance || 0} canRunWell={canRunWell} />
       <BalanceCounter value={user?.balance || 0} />
       <div style={{
         display: 'grid',

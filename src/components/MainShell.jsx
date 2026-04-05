@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useTransition } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import * as ApiManager from '../helpers/ApiManager.tsx'
+import { shouldRunHeavyEffect, subscribeToPerformanceChanges } from '../perf/performanceGovernor'
 
 const NavItem = ({ to, label }) => {
   return (
@@ -29,6 +30,7 @@ const MainShell = () => {
   const [user, setUser] = useState(null)
   const [, startTransition] = useTransition()
   const navigate = useNavigate()
+  const [canBlur, setCanBlur] = useState(() => shouldRunHeavyEffect('backdropBlur'))
 
   useEffect(() => {
     let isActive = true
@@ -39,6 +41,13 @@ const MainShell = () => {
     }
     load()
     return () => { isActive = false }
+  }, [])
+
+  useEffect(() => {
+    const unsub = subscribeToPerformanceChanges(() => {
+      setCanBlur(shouldRunHeavyEffect('backdropBlur'))
+    })
+    return () => unsub()
   }, [])
 
   const logout = () => {
@@ -55,7 +64,7 @@ const MainShell = () => {
           padding: '24px 16px',
           background: 'rgba(6,12,24,0.85)',
           borderRight: '1px solid rgba(0,212,255,0.15)',
-          backdropFilter: 'blur(16px)',
+          backdropFilter: canBlur ? 'blur(16px)' : 'none',
           position: 'sticky',
           top: 0,
           alignSelf: 'flex-start',
@@ -90,7 +99,7 @@ const MainShell = () => {
             padding: '14px 24px',
             background: 'rgba(5,10,20,0.85)',
             borderBottom: '1px solid rgba(0,212,255,0.15)',
-            backdropFilter: 'blur(16px)',
+            backdropFilter: canBlur ? 'blur(16px)' : 'none',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',

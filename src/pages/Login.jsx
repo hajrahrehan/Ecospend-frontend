@@ -3,6 +3,7 @@ import { motion, useMotionValue, useTransform } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { getCanvasWorker } from '../hooks/useQuantumWorker'
 import { eventBus, EVENTS } from '../lib/eventBus'
+import { shouldRunHeavyEffect, subscribeToPerformanceChanges } from '../perf/performanceGovernor'
 
 const LoginPage = () => {
   const mouseX = useMotionValue(0)
@@ -11,13 +12,21 @@ const LoginPage = () => {
   const rotateY = useTransform(mouseX, [-400, 400], [-10, 10])
   const [scanComplete, setScanComplete] = useState(false)
   const canvasRef = useRef()
+  const workerRef = useRef()
   const [, startTransition] = useTransition()
   const navigate = useNavigate()
+  const [canRunWave, setCanRunWave] = useState(() => shouldRunHeavyEffect('canvasWave'))
+  const [canBlur, setCanBlur] = useState(() => shouldRunHeavyEffect('backdropBlur'))
 
   // Draw quantum wave probability display via Worker + OffscreenCanvas
   useEffect(() => {
+    if (!canRunWave) {
+      workerRef.current?.postMessage({ type: 'STOP', id: 'loginWave' })
+      return
+    }
     const canvas = canvasRef.current
     const worker = getCanvasWorker()
+    workerRef.current = worker
     if (canvas && typeof canvas.transferControlToOffscreen === 'function' && !canvas.hasTransferred) {
       const offscreen = canvas.transferControlToOffscreen()
       canvas.hasTransferred = true
@@ -31,6 +40,14 @@ const LoginPage = () => {
     return () => {
       if (worker) worker.postMessage({ type: 'STOP', id: 'loginWave' })
     }
+  }, [canRunWave])
+
+  useEffect(() => {
+    const unsub = subscribeToPerformanceChanges(() => {
+      setCanRunWave(shouldRunHeavyEffect('canvasWave'))
+      setCanBlur(shouldRunHeavyEffect('backdropBlur'))
+    })
+    return () => unsub()
   }, [])
 
   const handleLogin = () => {
@@ -76,6 +93,7 @@ const LoginPage = () => {
           left: '50%',
           transform: 'translateX(-50%)',
           opacity: 0.6,
+          display: canRunWave ? 'block' : 'none',
         }}
       />
       
@@ -94,7 +112,7 @@ const LoginPage = () => {
         <div className="login-card" style={{
           width: 420,
           background: 'rgba(10, 22, 40, 0.85)',
-          backdropFilter: 'blur(24px)',
+          backdropFilter: canBlur ? 'blur(24px)' : 'none',
           border: '1px solid rgba(0, 212, 255, 0.2)',
           borderRadius: 20,
           padding: '0 0 32px',

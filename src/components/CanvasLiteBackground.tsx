@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from "react";
+import { getCanvasFpsCap, shouldRunHeavyEffect, subscribeToPerformanceChanges } from "../perf/performanceGovernor";
 
 export function CanvasLiteBackground() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -12,7 +13,8 @@ export function CanvasLiteBackground() {
 
     let rafId = 0;
     let last = 0;
-    const fpsCapMs = 1000 / 28;
+    let fpsCapMs = 1000 / getCanvasFpsCap();
+    let running = shouldRunHeavyEffect("canvasLite");
 
     const resize = () => {
       canvas.width = window.innerWidth;
@@ -31,6 +33,7 @@ export function CanvasLiteBackground() {
     }));
 
     const draw = (t: number) => {
+      if (!running) return;
       rafId = requestAnimationFrame(draw);
       if (t - last < fpsCapMs) return;
       last = t;
@@ -50,11 +53,28 @@ export function CanvasLiteBackground() {
       ctx.globalCompositeOperation = "source-over";
     };
 
-    rafId = requestAnimationFrame(draw);
+    const handlePerfChange = () => {
+      const nextRunning = shouldRunHeavyEffect("canvasLite");
+      fpsCapMs = 1000 / getCanvasFpsCap();
+      if (!nextRunning && running) {
+        running = false;
+        cancelAnimationFrame(rafId);
+        return;
+      }
+      if (nextRunning && !running) {
+        running = true;
+        last = 0;
+        rafId = requestAnimationFrame(draw);
+      }
+    };
+
+    const unsubscribe = subscribeToPerformanceChanges(handlePerfChange);
+    if (running) rafId = requestAnimationFrame(draw);
 
     return () => {
       cancelAnimationFrame(rafId);
       window.removeEventListener("resize", resize);
+      unsubscribe();
     };
   }, []);
 
