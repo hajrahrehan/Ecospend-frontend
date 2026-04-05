@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { getCanvasWorker } from '../hooks/useQuantumWorker'
 
 // For page-level loading — wave collapse visualization
-export const WaveCollapseLoader = memo(({ label = 'INITIALIZING QUANTUM STATE' }) => {
+export const WaveCollapseLoader = memo(({ label = 'INITIALIZING SESSION' }) => {
   const canvasRef = useRef()
 
   useEffect(() => {

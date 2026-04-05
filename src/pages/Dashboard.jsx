@@ -65,7 +65,7 @@ const BalanceCounter = ({ value, currency = 'PKR' }) => {
         fontFamily: 'var(--font-data)', fontSize: 11,
         color: 'var(--eco-quantum)', letterSpacing: '0.3em',
         marginBottom: 8,
-      }}>QUANTUM BALANCE FIELD</p>
+      }}>ACCOUNT BALANCE</p>
       <animated.div style={{
         fontFamily: 'var(--font-display)',
         fontSize: 42, fontWeight: 700,

@@ -38,7 +38,7 @@ const Support = () => {
         <textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder="Describe the issue in your quantum account…"
+          placeholder="Describe the issue with your account…"
           rows={4}
           style={{
             background: 'rgba(0,212,255,0.06)',

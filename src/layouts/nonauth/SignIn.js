@@ -70,7 +70,7 @@ function SignInBasic() {
           <Card className="quantum-card">
             <div className="quantum-card-header">
               <div className="quantum-card-title">ECO<span>SPEND</span></div>
-              <div className="quantum-card-sub">QUANTUM FINANCIAL INTERFACE</div>
+              <div className="quantum-card-sub">FINANCIAL INTERFACE</div>
             </div>
             <CardBody className="p-4">
               <div className="p-2 mt-4">

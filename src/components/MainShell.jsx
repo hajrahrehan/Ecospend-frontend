@@ -67,7 +67,7 @@ const MainShell = () => {
             ECO<span style={{ color: 'var(--eco-quantum)' }}>SPEND</span>
           </div>
           <div style={{ marginTop: 6, fontFamily: 'var(--font-data)', fontSize: 10, color: 'rgba(0,212,255,0.6)' }}>
-            QUANTUM NAVIGATION
+            NAVIGATION
           </div>
         </div>
         <div style={{ display: 'grid', gap: 10 }}>

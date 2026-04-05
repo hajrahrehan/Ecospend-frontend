@@ -68,7 +68,7 @@ const SignUpPage = () => {
     const res = await ApiManager.Register(payload)
     if (res) {
       eventBus.emit(EVENTS.XP_GAIN, { action: 'LOGIN' })
-      quantumToast('Quantum account created. Welcome aboard.', 'success', 'LOGIN')
+      quantumToast('Account created successfully. Welcome aboard.', 'success', 'LOGIN')
       startTransition(() => navigate('/main/dashboard'))
     }
   }
@@ -112,7 +112,7 @@ const SignUpPage = () => {
               ECO<span style={{ color: 'var(--eco-quantum)' }}>SPEND</span>
             </div>
             <div style={{ marginTop: 8, fontFamily: 'var(--font-data)', fontSize: 11, letterSpacing: '0.3em', color: 'rgba(0,212,255,0.6)' }}>
-              CREATE QUANTUM ACCOUNT
+              CREATE ACCOUNT
             </div>
           </div>
 
@@ -254,7 +254,7 @@ const QuantumChargeButton = ({ onSubmit }) => {
         }}
       />
       <span style={{ position: 'relative' }}>
-        {chargeLevel === 0 ? 'CREATE QUANTUM ACCOUNT' :
+        {chargeLevel === 0 ? 'CREATE ACCOUNT' :
          chargeLevel < 100 ? `CHARGING ${chargeLevel}%` : 'INITIALIZING...'}
       </span>
     </motion.button>

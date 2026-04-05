@@ -135,7 +135,7 @@ const LoginPage = () => {
               letterSpacing: '0.35em', color: 'rgba(0,212,255,0.7)',
               fontFamily: 'var(--font-data)',
               marginTop: 6, position: 'relative',
-            }}>QUANTUM FINANCIAL INTERFACE</p>
+            }}>FINANCIAL INTERFACE</p>
           </div>
           
           <div style={{ padding: '32px 32px 0' }}>

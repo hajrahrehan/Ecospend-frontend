@@ -6,7 +6,7 @@ const buildResponse = (message, context) => {
   const text = message.toLowerCase()
   const balance = context?.balance || 0
   if (text.includes('balance')) {
-    return `Your current quantum balance is PKR ${balance.toLocaleString()}.`
+    return `Your current balance is PKR ${balance.toLocaleString()}.`
   }
   if (text.includes('spending') || text.includes('too much')) {
     return 'Your spending is within the stable orbit range. Consider capping non-essential outflows to 15% of monthly inflow.'
@@ -17,7 +17,7 @@ const buildResponse = (message, context) => {
   if (text.includes('invest')) {
     return 'Diversify across low‑volatility funds and keep an emergency reserve equal to 3–6 months of expenses.'
   }
-  return 'I can help with balance checks, spending analysis, and savings guidance. Ask me anything in the quantum ledger.'
+  return 'I can help with balance checks, spending analysis, and savings guidance. Ask me anything about your account.'
 }
 
 const EcoAI = () => {
@@ -63,11 +63,11 @@ const EcoAI = () => {
         boxShadow: '0 0 40px rgba(0,212,255,0.08)',
       }}>
         <h2 style={{ fontFamily: 'var(--font-display)', color: '#fff', letterSpacing: '0.2em', marginBottom: 12 }}>
-          ECOAI ORBIT
+          ECOAI
         </h2>
-        <p style={{ fontFamily: 'var(--font-data)', color: 'rgba(0,212,255,0.6)', fontSize: 12, marginBottom: 20 }}>
-          Quantum financial advisor · response latency: 0.7s
-        </p>
+          <p style={{ fontFamily: 'var(--font-data)', color: 'rgba(0,212,255,0.6)', fontSize: 12, marginBottom: 20 }}>
+            Financial advisor · response latency: 0.7s
+          </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minHeight: 280 }}>
           {messages.map((msg) => (
@@ -106,7 +106,7 @@ const EcoAI = () => {
                   fontSize: 12,
                 }}
               >
-                EcoAI is stabilizing the wave function…
+                EcoAI is preparing a response…
               </motion.div>
             ) : null}
           </AnimatePresence>

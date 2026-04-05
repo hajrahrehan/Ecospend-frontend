@@ -101,7 +101,7 @@ const TransferPage = () => {
       {/* Step indicator with particle trail */}
       <TransferStepTrail currentStep={step} />
       
-      {/* Quantum beam canvas — shown during transfer */}
+      {/* Transfer animation canvas — shown during transfer */}
       {beamFiring && (
         <canvas
           ref={beamCanvasRef}
@@ -149,7 +149,7 @@ const TransferPage = () => {
           style={{ textAlign: 'center', marginBottom: 32 }}
         >
           <p style={{ fontFamily: 'var(--font-data)', fontSize: 10, color: 'var(--eco-quantum)', letterSpacing: '0.3em', marginBottom: 16 }}>
-            QUANTUM TRANSFER MAGNITUDE
+            TRANSFER AMOUNT
           </p>
           
           <motion.div style={{ display: 'inline-flex', alignItems: 'baseline', gap: 8 }}>
@@ -294,7 +294,7 @@ const HoldToLaunch = ({ onFire, amount }) => {
         fontFamily: 'var(--font-display)', fontSize: 14,
         letterSpacing: '0.2em', color: '#fff',
       }}>
-        {progress === 0 ? 'HOLD TO FIRE QUANTUM BEAM' :
+        {progress === 0 ? 'HOLD TO SEND TRANSFER' :
          progress < 100 ? `CHARGING ${progress.toFixed(0)}% · PKR ${Number(amount).toLocaleString()}` :
          'BEAM AWAY'}
       </span>
@@ -344,7 +344,7 @@ const TransferConfirmationPulsar = ({ amount }) => {
         ⚡
       </motion.div>
       <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 24, color: '#fff', letterSpacing: '0.1em' }}>
-        QUANTUM TRANSFER COMPLETE
+        TRANSFER COMPLETE
       </h2>
       <p style={{ fontFamily: 'var(--font-data)', color: 'var(--eco-nova)', marginTop: 8 }}>
         PKR {Number(amount).toLocaleString()} entangled successfully
