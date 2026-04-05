@@ -1,3 +1,7 @@
+// Transfer.jsx
+// Purpose: Transfer flow + optional beam animation.
+// Depends on: Canvas2D worker, EventBus XP events, performanceGovernor gating.
+// Used by: MainShell (/main/transfer).
 import React, { useState, useRef, useEffect, useTransition } from 'react'
 import { motion } from 'framer-motion'
 import { getCanvasWorker } from '../hooks/useQuantumWorker'

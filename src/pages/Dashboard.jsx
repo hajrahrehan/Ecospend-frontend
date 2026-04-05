@@ -1,3 +1,7 @@
+// Dashboard.jsx
+// Purpose: Main account overview + gravity well visualization.
+// Depends on: Canvas2D worker, performanceGovernor gating for heavy effects.
+// Used by: MainShell (/main/dashboard).
 import React, { useEffect, useRef, useState, useTransition, memo } from 'react'
 import { motion } from 'framer-motion'
 import { useSpring, animated } from '@react-spring/web'
@@ -16,7 +20,7 @@ const BalanceGravityWell = memo(({ balance, canRunWell }) => {
 
   useEffect(() => {
     if (!canRunWell) {
-      if (canvasRef.current) {
+      if (canvasRef.current && !canvasRef.current.hasTransferred) {
         const ctx = canvasRef.current.getContext('2d')
         if (ctx) {
           ctx.clearRect(0, 0, 340, 240)
@@ -30,6 +34,7 @@ const BalanceGravityWell = memo(({ balance, canRunWell }) => {
     // Only init transfer once
     if (canvasRef.current && !workerRef.current && typeof canvasRef.current.transferControlToOffscreen === 'function') {
       const offscreen = canvasRef.current.transferControlToOffscreen()
+      canvasRef.current.hasTransferred = true
       workerRef.current = getCanvasWorker()
       workerRef.current.postMessage({ type: 'INIT_OFFSCREEN', id: 'gravityWell', canvas: offscreen }, [offscreen])
     }

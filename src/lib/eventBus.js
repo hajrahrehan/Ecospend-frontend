@@ -1,3 +1,7 @@
+// eventBus.js
+// Purpose: Central event hub for high-frequency ticks and UI signals.
+// Depends on: performanceGovernor for batching intervals.
+// Used by: QuantumField, HUD, pages (XP events), workers.
 import mitt from 'mitt'
 import { getEventBatchInterval } from '../perf/performanceGovernor'
 

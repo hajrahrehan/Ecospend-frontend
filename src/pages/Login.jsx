@@ -1,3 +1,7 @@
+// Login.jsx
+// Purpose: Auth entry UI + optional wave visualization.
+// Depends on: Canvas2D worker, EventBus, performanceGovernor effect gating.
+// Used by: App routing (/auth).
 import React, { useEffect, useRef, useState, useTransition } from 'react'
 import { motion, useMotionValue, useTransform } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'

@@ -1,4 +1,8 @@
 /* eslint-disable no-restricted-globals */
+// canvas2d.worker.js
+// Purpose: OffscreenCanvas rendering for UI effects (wave, beam, gravity well).
+// Depends on: performanceGovernor via SET_FPS / reduced-motion signals.
+// Used by: Login, Dashboard, Transfer, loaders.
 
 import { waveProbability } from '../lib/physics'
 

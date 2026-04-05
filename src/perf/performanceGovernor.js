@@ -1,4 +1,7 @@
-import { getPerfTier } from '../lib/perfTier'
+// performanceGovernor.js
+// Purpose: Single source of truth for performance tier, budgets, and effect gating.
+// Depends on: window/document signals + internal base-tier heuristic.
+// Used by: EventBus batching, workers, CanvasLite, UI blur/effect toggles.
 
 const listeners = new Set()
 let initialized = false
@@ -19,11 +22,21 @@ const getTierIndex = (tier) => TIERS.indexOf(tier)
 const clampTier = (tier) => (TIERS.includes(tier) ? tier : 'mid')
 
 const computeBaseTier = () => {
-  try {
-    return clampTier(getPerfTier())
-  } catch (e) {
-    return 'mid'
-  }
+  if (typeof window === 'undefined') return 'mid'
+
+  const isMobile =
+    /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '') ||
+    (navigator.maxTouchPoints || 0) > 1 ||
+    window.innerWidth < 900
+
+  if (isMobile) return 'low'
+
+  const cores = navigator.hardwareConcurrency || 4
+  const mem = navigator.deviceMemory || 4
+
+  if (cores >= 8 && mem >= 8) return 'high'
+  if (cores >= 4 && mem >= 4) return 'mid'
+  return 'low'
 }
 
 const computeBudget = (tier) => {

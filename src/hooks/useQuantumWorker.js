@@ -1,3 +1,7 @@
+// useQuantumWorker.js
+// Purpose: Shared physics worker lifecycle + wiring QUANTUM_TICK into EventBus.
+// Depends on: performanceGovernor for tick/budget, eventBus for delivery.
+// Used by: QuantumField and any caller needing physics worker access.
 import { useEffect, useRef, useTransition } from 'react'
 import { emitQuantumTick } from '../lib/eventBus'
 import { getFrameBudget, getTickRate, subscribeToPerformanceChanges } from '../perf/performanceGovernor'

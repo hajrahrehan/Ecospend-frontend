@@ -1,3 +1,7 @@
+// QuantumField.jsx
+// Purpose: Main R3F particle field driven by physics worker ticks.
+// Depends on: EventBus QUANTUM_TICK, performanceGovernor for tick rate + effect gating.
+// Used by: QuantumBackground (high tier only).
 import React, { useRef, useMemo, useEffect, memo, lazy, Suspense } from 'react'
 import { Stars } from '@react-three/drei'
 import { useThree } from '@react-three/fiber'

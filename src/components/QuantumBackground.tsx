@@ -1,8 +1,9 @@
 import React, { Suspense, lazy, memo, useEffect, useState } from "react";
 import { Canvas } from "@react-three/fiber";
-import type { PerfTier } from "../lib/perfTier";
 import { CanvasLiteBackground } from "./CanvasLiteBackground";
 import { StaticCosmicBackground } from "./StaticCosmicBackground";
+
+export type PerfTier = "high" | "mid" | "low";
 
 const QuantumField = lazy(() => import("./QuantumField"));
 
