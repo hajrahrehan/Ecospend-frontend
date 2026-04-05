@@ -1,13 +1,12 @@
-import React, { useEffect } from "react";
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import React, { useEffect, useState, memo, lazy, Suspense } from "react";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import { Canvas } from '@react-three/fiber'
-import QuantumField from './components/QuantumField'
+import { PerformanceMonitor } from '@react-three/drei'
 import QuantumHUD from './components/QuantumHUD'
+import QuantumDevStats from './components/QuantumDevStats'
 import { Toaster } from 'react-hot-toast'
 import LoginPage from './pages/Login'
-import DashboardPage from './pages/Dashboard'
-import TransferPage from './pages/Transfer'
 
 import AuthLayout from "layouts/auth/Auth.js";
 import AdminAuth from "layouts/auth/AdminAuth.js";
@@ -17,51 +16,61 @@ import Products from "layouts/nonauth/Products";
 
 import ThemeContextWrapper from "./components/ThemeWrapper/ThemeWrapper";
 import BackgroundColorWrapper from "./components/BackgroundColorWrapper/BackgroundColorWrapper";
-import { useRoomMotion } from "./three/RoomMotion";
+import MainShell from "./components/MainShell";
 
-export const roomSlots = [
-  {
-    id: "vault-core",
-    wall: "right",
-    x: -120,
-    y: 80,
-    z: -40,
-    width: 440,
-    height: 280,
-    type: "coins",
-  },
-  {
-    id: "orbit-ledger",
-    wall: "back",
-    x: -240,
-    y: 180,
-    z: 0,
-    width: 360,
-    height: 220,
-    type: "orbit",
-  },
-  {
-    id: "credit-stream",
-    wall: "left",
-    x: 220,
-    y: -40,
-    z: 40,
-    width: 340,
-    height: 200,
-    type: "ledger",
-  },
-];
+const QuantumField = lazy(() => import('./components/QuantumField'))
+const DashboardPage = lazy(() => import('./pages/Dashboard'))
+const TransferPage = lazy(() => import('./pages/Transfer'))
+const EcoAIPage = lazy(() => import('./pages/EcoAI'))
+const EcoMallPage = lazy(() => import('./pages/EcoMall'))
+const SupportPage = lazy(() => import('./pages/Support'))
+const ProfilePage = lazy(() => import('./pages/Profile'))
+const CardsPage = lazy(() => import('./pages/Cards'))
+const AdminPortalPage = lazy(() => import('./pages/AdminPortal'))
+const SignUpPage = lazy(() => import('./pages/SignUp'))
+const PerformanceTuner = memo(({ onQualityChange, onDprChange }) => {
+  return (
+    <PerformanceMonitor
+      onDecline={() => {
+        onQualityChange?.('low')
+        onDprChange?.(1)
+      }}
+      onIncline={() => {
+        onQualityChange?.('high')
+        onDprChange?.(1.5)
+      }}
+    />
+  )
+})
 
-const RouteMotionTrigger = () => {
-  const location = useLocation();
-  const { playRouteTransition } = useRoomMotion();
+const QuantumCanvas = () => {
+  const [quality, setQuality] = useState('high')
+  const [dpr, setDpr] = useState(1.5)
+  const [reducedMotion, setReducedMotion] = useState(false)
 
   useEffect(() => {
-    if (playRouteTransition) playRouteTransition(location.pathname);
-  }, [location.pathname, playRouteTransition]);
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const handleChange = (e) => setReducedMotion(e.matches)
+    handleChange(mq)
+    mq.addEventListener('change', handleChange)
+    return () => mq.removeEventListener('change', handleChange)
+  }, [])
 
-  return null;
-};
+  return (
+    <Canvas
+      frameloop="demand"
+      camera={{ position: [0, 0, 5], fov: 75 }}
+      gl={{ antialias: true, powerPreference: 'high-performance', alpha: true, stencil: false }}
+      shadows={false}
+      dpr={dpr}
+    >
+      <PerformanceTuner onQualityChange={setQuality} onDprChange={setDpr} />
+      <Suspense fallback={null}>
+        <QuantumField performanceLevel={quality} reducedMotion={reducedMotion} />
+      </Suspense>
+    </Canvas>
+  )
+}
 
 const App3D = () => (
   <ThemeContextWrapper>
@@ -69,38 +78,45 @@ const App3D = () => (
       <div style={{ position: 'relative', width: '100vw', minHeight: '100vh', background: 'var(--eco-void)' }}>
         {/* Persistent 3D cosmos background */}
         <div style={{ position: 'fixed', inset: 0, zIndex: 0 }}>
-          <Canvas
-            camera={{ position: [0, 0, 5], fov: 75 }}
-            gl={{ antialias: true, powerPreference: 'high-performance', alpha: true }}
-            dpr={[1, 1.5]}
-          >
-            <QuantumField />
-          </Canvas>
+          <QuantumCanvas />
         </div>
         
         {/* All React Router content lives here — above the canvas */}
         <div style={{ position: 'relative', zIndex: 1 }}>
           <BrowserRouter>
-            <RouteMotionTrigger />
-            <Routes>
-              {/* Overwritten Gamified Routes */}
-              <Route path="/auth" element={<LoginPage />} />
-              <Route path="/main/dashboard" element={<DashboardPage />} />
-              <Route path="/main/transfer" element={<TransferPage />} />
+            <Suspense fallback={null}>
+              <Routes>
+                {/* Overwritten Gamified Routes */}
+                <Route path="/auth" element={<LoginPage />} />
+                <Route path="/main" element={<MainShell />}>
+                  <Route path="dashboard" element={<DashboardPage />} />
+                  <Route path="transfer" element={<TransferPage />} />
+                  <Route path="profile" element={<ProfilePage />} />
+                  <Route path="cards" element={<CardsPage />} />
+                  <Route path="support" element={<SupportPage />} />
+                  <Route path="ecoai" element={<EcoAIPage />} />
+                  <Route path="ecomall" element={<EcoMallPage />} />
+                  <Route path="mall" element={<EcoMallPage />} />
+                  <Route path="*" element={<Navigate to="/main/dashboard" replace />} />
+                </Route>
+                <Route path="/admin" element={<AdminPortalPage />} />
 
-              {/* Existing Routes Fallbacks */}
-              <Route path="/register" element={<NonAuthLayout />} />
-              <Route path="/admin-auth" element={<AdminSignIn />} />
-              <Route path="/products" element={<Products />} />
-              <Route path="/main/*" element={<AuthLayout />} />
-              <Route path="/admin/*" element={<AdminAuth />} />
-              <Route path="*" element={<Navigate to="/auth" replace />} />
-            </Routes>
+                {/* Existing Routes Fallbacks */}
+                <Route path="/register" element={<SignUpPage />} />
+                <Route path="/register-legacy" element={<NonAuthLayout />} />
+                <Route path="/admin-auth" element={<AdminSignIn />} />
+                <Route path="/products" element={<Products />} />
+                <Route path="/main/*" element={<AuthLayout />} />
+                <Route path="/admin/legacy/*" element={<AdminAuth />} />
+                <Route path="*" element={<Navigate to="/auth" replace />} />
+              </Routes>
+            </Suspense>
           </BrowserRouter>
         </div>
         
         {/* Global HUD elements */}
         <QuantumHUD />
+        {process.env.NODE_ENV === 'development' ? <QuantumDevStats /> : null}
         <Toaster />
       </div>
     </BackgroundColorWrapper>

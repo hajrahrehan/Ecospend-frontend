@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useTransition } from 'react'
 import { motion } from 'framer-motion'
-import { useGamificationStore } from '../store/gamification'
-import { quantumToast } from '../lib/toast'
+import { getCanvasWorker } from '../hooks/useQuantumWorker'
+import { eventBus, EVENTS } from '../lib/eventBus'
+import * as ApiManager from '../helpers/ApiManager.tsx'
 
 const TransferStepTrail = ({ currentStep }) => {
   return (
@@ -28,64 +29,67 @@ const TransferPage = () => {
   const [amount, setAmount] = useState('')
   const [beamFiring, setBeamFiring] = useState(false)
   const beamCanvasRef = useRef()
+  const workerRef = useRef()
+  const [, startTransition] = useTransition()
+  const [user, setUser] = useState(null)
+  const [beneficiaries, setBeneficiaries] = useState([])
+  const [selectedBen, setSelectedBen] = useState(null)
+  const [error, setError] = useState('')
 
-  // Particle beam animation — fires on confirm
+  useEffect(() => {
+    let isActive = true
+    const load = async () => {
+      const res = await ApiManager.UserInfo()
+      const ben = await ApiManager.BeneficiaryList()
+      if (!isActive) return
+      setUser(res?.data?.user || null)
+      setBeneficiaries(ben?.data || [])
+    }
+    load()
+    return () => { isActive = false }
+  }, [])
+
+  // Particle beam animation — fires on confirm using worker
   const fireQuantumBeam = () => {
+    const amountNum = Number(amount || 0)
+    if (!selectedBen) {
+      setError('Select a recipient entity first.')
+      return
+    }
+    if (!amountNum || amountNum <= 0) {
+      setError('Enter a valid amount.')
+      return
+    }
+    if (user && amountNum > user.balance) {
+      setError('Insufficient balance for this transfer.')
+      return
+    }
+    setError('')
     setBeamFiring(true)
     setTimeout(() => {
       const canvas = beamCanvasRef.current
-      if (!canvas) return
-      const ctx = canvas.getContext('2d')
-      const W = canvas.width, H = canvas.height
-      let t = 0
-
-      const particles = Array.from({ length: 60 }, (_, i) => ({
-        delay: i * 0.02,
-        phase: (Math.random() - 0.5) * 0.4,
-        amp: (Math.random() - 0.5) * 30,
-        omega: 8 + Math.random() * 4,
-        speed: 0.4 + Math.random() * 0.3,
-        size: Math.random() * 3 + 1,
-      }))
-
-      const draw = () => {
-        ctx.fillStyle = 'rgba(0,0,15,0.3)'
-        ctx.fillRect(0, 0, W, H)
-
-        particles.forEach(p => {
-          const lt = Math.max(0, t - p.delay)
-          if (lt <= 0) return
-          const progress = lt * p.speed
-          if (progress > 1.2) return
-
-          const x = W * Math.min(progress, 1)
-          const decay = Math.exp(-p.omega * 0.1 * lt)
-          const y = H / 2 + p.amp * Math.sin(p.omega * lt + p.phase) * decay
-
-          const alpha = Math.max(0, 1 - Math.max(0, progress - 0.8) * 5)
-          const grd = ctx.createRadialGradient(x, y, 0, x, y, p.size * 3)
-          grd.addColorStop(0, `rgba(0,212,255,${alpha})`)
-          grd.addColorStop(1, 'transparent')
-          ctx.fillStyle = grd
-          ctx.beginPath()
-          ctx.arc(x, y, p.size * 3, 0, Math.PI * 2)
-          ctx.fill()
-
-          ctx.fillStyle = `rgba(255,255,255,${alpha * 0.9})`
-          ctx.beginPath()
-          ctx.arc(x, y, p.size * 0.5, 0, Math.PI * 2)
-          ctx.fill()
-        })
-
-        t += 0.025
-        if (t < 3) requestAnimationFrame(draw)
-        else {
+      if (canvas && !workerRef.current && typeof canvas.transferControlToOffscreen === 'function') {
+        const offscreen = canvas.transferControlToOffscreen()
+        workerRef.current = getCanvasWorker()
+        workerRef.current.postMessage({ type: 'INIT_OFFSCREEN', id: 'beam', canvas: offscreen }, [offscreen])
+      }
+      
+      if (workerRef.current) {
+        workerRef.current.postMessage({ type: 'START_BEAM', id: 'beam' })
+      }
+      
+      // Simulate beam duration and transition to next step
+      setTimeout(() => {
+        startTransition(async () => {
+          await ApiManager.TransferToBeneficiary(selectedBen._id, { amount: amountNum })
+          const res = await ApiManager.UserInfo()
+          setUser(res?.data?.user || user)
+          eventBus.emit(EVENTS.XP_GAIN, { action: 'TRANSFER' })
           setBeamFiring(false)
           setStep(4)
-        }
-      }
-      draw()
-    }, 100) // Slight delay to ensure canvas mounts before drawing
+        })
+      }, 3000)
+    }, 100)
   }
 
   // Amount input — font size grows with value (bigger money = bigger text)
@@ -110,16 +114,29 @@ const TransferPage = () => {
       {step === 1 && !beamFiring && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ textAlign: 'center' }}>
           <p style={{ fontFamily: 'var(--font-data)', color: 'var(--eco-quantum)' }}>SELECT RECIPIENT ENTITY</p>
-          <button
-            onClick={() => setStep(2)}
-            style={{
-              padding: '12px 24px', background: 'var(--eco-station)',
-              border: '1px solid var(--eco-quantum)', color: '#fff',
-              marginTop: '20px', cursor: 'pointer', borderRadius: '8px'
-            }}
-          >
-            John Doe (0x391...)
-          </button>
+          <div style={{ display: 'grid', gap: 10, marginTop: 20 }}>
+            {beneficiaries.map((b) => (
+              <button
+                key={b._id}
+                onClick={() => {
+                  setSelectedBen(b)
+                  setStep(2)
+                }}
+                style={{
+                  padding: '12px 18px',
+                  background: 'rgba(10,22,40,0.6)',
+                  border: `1px solid ${selectedBen?._id === b._id ? 'var(--eco-quantum)' : 'rgba(0,212,255,0.2)'}`,
+                  color: '#fff',
+                  cursor: 'pointer',
+                  borderRadius: 10,
+                  fontFamily: 'var(--font-data)',
+                  letterSpacing: '0.05em',
+                }}
+              >
+                {b.nickname} · {b.bank} · {b.account_no}
+              </button>
+            ))}
+          </div>
         </motion.div>
       )}
 
@@ -153,46 +170,76 @@ const TransferPage = () => {
             />
           </motion.div>
           
-          {/* Energy meter — shows transfer intensity */}
-          {Number(amount) > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              style={{ marginTop: 16 }}
-            >
-              <div style={{ height: 3, background: 'rgba(0,212,255,0.1)', borderRadius: 2, position: 'relative', overflow: 'hidden' }}>
-                <motion.div
-                  animate={{ width: `${Math.min((Number(amount) / 1000000) * 100, 100)}%` }}
-                  transition={{ type: 'spring', stiffness: 100 }}
-                  style={{
-                    height: '100%',
-                    background: 'linear-gradient(90deg, var(--eco-quantum), var(--eco-plasma))',
-                    boxShadow: '0 0 8px var(--eco-quantum)',
-                  }}
-                />
-              </div>
-              <p style={{ fontSize: 10, fontFamily: 'var(--font-data)', color: 'rgba(0,212,255,0.5)', marginTop: 6 }}>
-                TRANSFER ENERGY: {((Number(amount) / 1000000) * 100).toFixed(2)}% of field capacity
-              </p>
-              
-              <button
-                onClick={() => setStep(3)}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            style={{ marginTop: 16 }}
+          >
+            <div style={{ height: 3, background: 'rgba(0,212,255,0.1)', borderRadius: 2, position: 'relative', overflow: 'hidden' }}>
+              <motion.div
+                animate={{ width: `${Math.min((Number(amount || 0) / 1000000) * 100, 100)}%` }}
+                transition={{ type: 'spring', stiffness: 100 }}
                 style={{
-                  padding: '12px 24px', background: 'var(--eco-station)',
-                  border: '1px solid var(--eco-quantum)', color: '#fff',
-                  marginTop: '30px', cursor: 'pointer', borderRadius: '8px'
+                  height: '100%',
+                  background: 'linear-gradient(90deg, var(--eco-quantum), var(--eco-plasma))',
+                  boxShadow: '0 0 8px var(--eco-quantum)',
                 }}
-              >
-                CONFIRM MAGNITUDE
-              </button>
-            </motion.div>
-          )}
+              />
+            </div>
+            <p style={{ fontSize: 10, fontFamily: 'var(--font-data)', color: 'rgba(0,212,255,0.5)', marginTop: 6 }}>
+              TRANSFER ENERGY: {((Number(amount || 0) / 1000000) * 100).toFixed(2)}% of field capacity
+            </p>
+
+            <div style={{ marginTop: 12 }}>
+              <div style={{ height: 6, borderRadius: 999, background: 'rgba(0,212,255,0.08)', overflow: 'hidden' }}>
+                <div style={{
+                  height: '100%',
+                  width: `${Math.min(100, (Number(amount || 0) / Math.max(1, user?.balance || 1)) * 100)}%`,
+                  background: 'linear-gradient(90deg, var(--eco-quantum), var(--eco-solar))',
+                  boxShadow: '0 0 10px rgba(0,212,255,0.3)',
+                }} />
+              </div>
+              <p style={{ marginTop: 8, color: 'rgba(0,212,255,0.6)', fontFamily: 'var(--font-data)', fontSize: 11 }}>
+                AVAILABLE BALANCE: PKR {user?.balance?.toLocaleString() || '—'}
+              </p>
+            </div>
+
+            {error ? (
+              <p style={{ marginTop: 12, color: 'var(--eco-pulsar)', fontFamily: 'var(--font-data)', fontSize: 11 }}>
+                {error}
+              </p>
+            ) : null}
+            
+            <button
+              onClick={() => setStep(3)}
+              style={{
+                padding: '12px 24px', background: 'var(--eco-station)',
+                border: '1px solid var(--eco-quantum)', color: '#fff',
+                marginTop: '30px', cursor: 'pointer', borderRadius: '8px'
+              }}
+            >
+              CONFIRM MAGNITUDE
+            </button>
+          </motion.div>
         </motion.div>
       )}
 
       {/* Step 3 — Hold to launch */}
       {step === 3 && !beamFiring && (
-        <HoldToLaunch onFire={fireQuantumBeam} amount={Number(amount)} />
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ fontFamily: 'var(--font-data)', color: 'var(--eco-quantum)' }}>CONFIRM TRANSFER</p>
+          <p style={{ color: '#fff', marginTop: 12 }}>
+            Send PKR {Number(amount || 0).toLocaleString()} to {selectedBen?.nickname || 'recipient'}?
+          </p>
+          {error ? (
+            <p style={{ marginTop: 12, color: 'var(--eco-pulsar)', fontFamily: 'var(--font-data)', fontSize: 11 }}>
+              {error}
+            </p>
+          ) : null}
+          <div style={{ marginTop: 18 }}>
+            <HoldToLaunch onFire={fireQuantumBeam} amount={Number(amount)} />
+          </div>
+        </div>
       )}
       
       {/* Step 4 — Confirmation */}
@@ -271,9 +318,8 @@ const TransferConfirmationPulsar = ({ amount }) => {
       burst(60, 0.3); burst(120, 0.7)
     })
     
-    // Wire up gamification + toast
-    useGamificationStore.getState().addXP('TRANSFER')
-    quantumToast(`PKR ${Number(amount).toLocaleString()} quantum beam fired.`, 'success')
+    // EVENT BUS DRIVEN XP GAIN
+    eventBus.emit(EVENTS.XP_GAIN, { action: 'TRANSFER' })
   }, [amount])
 
   return (

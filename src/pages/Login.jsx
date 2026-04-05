@@ -1,9 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, useTransition } from 'react'
 import { motion, useMotionValue, useTransform } from 'framer-motion'
-import { waveProbability } from '../lib/physics'
 import { useNavigate } from 'react-router-dom'
-import { useGamificationStore } from '../store/gamification'
-import { quantumToast } from '../lib/toast'
+import { getCanvasWorker } from '../hooks/useQuantumWorker'
+import { eventBus, EVENTS } from '../lib/eventBus'
 
 const LoginPage = () => {
   const mouseX = useMotionValue(0)
@@ -12,42 +11,33 @@ const LoginPage = () => {
   const rotateY = useTransform(mouseX, [-400, 400], [-10, 10])
   const [scanComplete, setScanComplete] = useState(false)
   const canvasRef = useRef()
+  const [, startTransition] = useTransition()
   const navigate = useNavigate()
 
-  // Draw quantum wave probability display on canvas
+  // Draw quantum wave probability display via Worker + OffscreenCanvas
   useEffect(() => {
     const canvas = canvasRef.current
-    const ctx = canvas.getContext('2d')
-    let t = 0, raf
-
-    const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      ctx.fillStyle = 'rgba(0,0,0,0)'
-      
-      // Draw |ψ(x,t)|² — quantum probability distribution
-      for (let x = 0; x < canvas.width; x++) {
-        const prob = waveProbability(x, t, canvas.width / 2, 60, 0.04, 30)
-        const h = prob * canvas.height * 2.5
-        const alpha = Math.min(prob * 8, 0.9)
-        
-        // Color shifts cyan→purple with wave phase
-        const hue = 180 + prob * 120
-        ctx.fillStyle = `hsla(${hue}, 90%, 65%, ${alpha})`
-        ctx.fillRect(x, canvas.height - h, 1, h)
-      }
-      
-      t += 0.025
-      raf = requestAnimationFrame(draw)
+    const worker = getCanvasWorker()
+    if (canvas && typeof canvas.transferControlToOffscreen === 'function' && !canvas.hasTransferred) {
+      const offscreen = canvas.transferControlToOffscreen()
+      canvas.hasTransferred = true
+      worker.postMessage({ type: 'INIT_OFFSCREEN', id: 'loginWave', canvas: offscreen }, [offscreen])
     }
-    draw()
-    return () => cancelAnimationFrame(raf)
+    
+    if (worker) {
+      worker.postMessage({ type: 'START_WAVE', id: 'loginWave' })
+    }
+
+    return () => {
+      if (worker) worker.postMessage({ type: 'STOP', id: 'loginWave' })
+    }
   }, [])
 
   const handleLogin = () => {
-    useGamificationStore.getState().addXP('LOGIN')
-    useGamificationStore.getState().checkStreak()
-    quantumToast('Identity confirmed. Welcome back, Navigator.', 'success')
-    navigate('/main/dashboard')
+    startTransition(() => {
+      eventBus.emit(EVENTS.XP_GAIN, { action: 'LOGIN' })
+      navigate('/main/dashboard')
+    })
   }
 
   return (
@@ -153,14 +143,25 @@ const LoginPage = () => {
             <QuantumInput label="ENCRYPTION KEY" type="password" placeholder="••••••••••••" />
             <QuantumSignInButton onSubmit={handleLogin} />
             
-            <p style={{
-              textAlign: 'center', marginTop: 20,
-              fontFamily: 'var(--font-data)', fontSize: 12,
-              color: 'var(--eco-quantum)', cursor: 'pointer',
-              letterSpacing: '0.05em',
-            }}>
+            <button
+              type="button"
+              onClick={() => startTransition(() => navigate('/register'))}
+              style={{
+                display: 'block',
+                width: '100%',
+                textAlign: 'center',
+                marginTop: 20,
+                background: 'transparent',
+                border: 'none',
+                fontFamily: 'var(--font-data)',
+                fontSize: 12,
+                color: 'var(--eco-quantum)',
+                cursor: 'pointer',
+                letterSpacing: '0.05em',
+              }}
+            >
               INITIALIZE NEW ACCOUNT →
-            </p>
+            </button>
           </div>
         </div>
       </motion.div>
@@ -260,9 +261,14 @@ const QuantumSignInButton = ({ onSubmit }) => {
 
   return (
     <motion.button
-      onMouseDown={startCharge}
-      onMouseUp={stopCharge}
-      onMouseLeave={stopCharge}
+      type="button"
+      onPointerDown={startCharge}
+      onPointerUp={stopCharge}
+      onPointerLeave={stopCharge}
+      onClick={() => {
+        stopCharge()
+        onSubmit?.()
+      }}
       whileHover={{ scale: 1.02 }}
       style={{
         width: '100%', padding: '14px',

@@ -20,7 +20,6 @@ import * as ApiManager from "helpers/ApiManager.tsx";
 import * as Yup from "yup";
 import { useFormik } from "formik";
 
-import bgImage from "assets/img/bg-sign-in-basic.jpeg";
 import { useNavigate } from "react-router-dom";
 import DatePicker from "react-date-picker";
 
@@ -68,24 +67,12 @@ function SignInBasic() {
     return (
       <>
         <Col md={7} lg={5} xl={4}>
-          <Card>
-            <Card
-              className="p-4 bg-info shadow"
-              style={{
-                width: "90%",
-                marginLeft: "5%",
-                marginTop: "-5%",
-                zIndex: 3,
-                position: "absolute",
-              }}
-            >
-              <div className="text-center mt-2">
-                <h4 className={"text-white fw-bold"}>
-                  <b>Welcome to Hello Bank!</b>
-                </h4>
-              </div>
-            </Card>
-            <CardBody className="p-4" style={{ marginTop: "7vh" }}>
+          <Card className="quantum-card">
+            <div className="quantum-card-header">
+              <div className="quantum-card-title">ECO<span>SPEND</span></div>
+              <div className="quantum-card-sub">QUANTUM FINANCIAL INTERFACE</div>
+            </div>
+            <CardBody className="p-4">
               <div className="p-2 mt-4">
                 <Form
                   onSubmit={(e) => {
@@ -95,11 +82,11 @@ function SignInBasic() {
                   action="#"
                 >
                   <div className="mb-4">
-                    <Label htmlFor="email">Email</Label>
+                    <Label className="quantum-label" htmlFor="email">Email</Label>
                     <div className="position-relative auth-pass-inputgroup mb-3">
                       <Input
                         name="email"
-                        className="form-control pe-5"
+                        className="form-control pe-5 quantum-input"
                         placeholder="email"
                         type="text"
                         onBlur={validation.handleBlur}
@@ -119,12 +106,12 @@ function SignInBasic() {
                   </div>
 
                   <div className="mb-4">
-                    <Label className="form-label">Password</Label>
+                    <Label className="quantum-label form-label">Password</Label>
                     <div className="position-relative auth-pass-inputgroup mb-3">
                       <Input
                         name="password"
                         autoComplete="on"
-                        className="form-control pe-5"
+                        className="form-control pe-5 quantum-input"
                         type="password"
                         placeholder="Enter Password"
                         onBlur={validation.handleBlur}
@@ -147,11 +134,7 @@ function SignInBasic() {
 
                   <div className="mt-5">
                     <Button
-                      color="info"
-                      className={`btn btn-info w-100`}
-                      style={{
-                        height: "7vh",
-                      }}
+                      className="quantum-btn w-100"
                       type="submit"
                       disabled={APIWorking}
                     >
@@ -163,7 +146,7 @@ function SignInBasic() {
               <Row className="mt-2">
                 <Col className="text-center">
                   <Button
-                    className="btn-link text-info"
+                    className="quantum-link"
                     onClick={() => setisLogin(false)}
                   >
                     Click here to Register
@@ -233,33 +216,21 @@ function SignInBasic() {
     return (
       <>
         <Col md={12} lg={12} xl={12}>
-          <Card>
-            <Card
-              className="p-4 bg-info shadow"
-              style={{
-                width: "90%",
-                marginLeft: "5%",
-                marginTop: "-5%",
-                zIndex: 3,
-                position: "absolute",
-              }}
-            >
-              <div className="text-center mt-2">
-                <h4 className={"text-white fw-bold"}>
-                  <b>Welcome to Hello Bank!</b>
-                </h4>
-              </div>
-            </Card>
-            <CardBody className="p-4" style={{ marginTop: "7vh" }}>
+          <Card className="quantum-card">
+            <div className="quantum-card-header">
+              <div className="quantum-card-title">ECO<span>SPEND</span></div>
+              <div className="quantum-card-sub">INITIALIZE NEW ACCOUNT</div>
+            </div>
+            <CardBody className="p-4">
               <div className="p-2">
                 <Form onSubmit={validation.handleSubmit} action="#">
                   <Row>
                     <Col xs={12} md={4}>
-                      <Label htmlFor="fname">First Name</Label>
+                      <Label className="quantum-label" htmlFor="fname">First Name</Label>
                       <div className="position-relative auth-pass-inputgroup mb-3">
                         <Input
                           name="fname"
-                          className="form-control pe-5"
+                          className="form-control pe-5 quantum-input"
                           placeholder="ABCD"
                           type="text"
                           onBlur={validation.handleBlur}
@@ -278,11 +249,11 @@ function SignInBasic() {
                       </div>
                     </Col>
                     <Col xs={12} md={4}>
-                      <Label htmlFor="lname">Last Name</Label>
+                      <Label className="quantum-label" htmlFor="lname">Last Name</Label>
                       <div className="position-relative auth-pass-inputgroup mb-3">
                         <Input
                           name="lname"
-                          className="form-control pe-5"
+                          className="form-control pe-5 quantum-input"
                           placeholder="XYZ"
                           type="text"
                           onBlur={validation.handleBlur}
@@ -301,11 +272,11 @@ function SignInBasic() {
                       </div>
                     </Col>
                     <Col xs={12} md={4}>
-                      <Label htmlFor="cnic">CNIC</Label>
+                      <Label className="quantum-label" htmlFor="cnic">CNIC</Label>
                       <div className="position-relative auth-pass-inputgroup mb-3">
                         <Input
                           name="cnic"
-                          className="form-control pe-5"
+                          className="form-control pe-5 quantum-input"
                           placeholder="00000-0000000-0"
                           type="text"
                           onBlur={validation.handleBlur}
@@ -330,11 +301,11 @@ function SignInBasic() {
 
                   <Row>
                     <Col xs={12} md={4}>
-                      <Label htmlFor="email">Email</Label>
+                      <Label className="quantum-label" htmlFor="email">Email</Label>
                       <div className="position-relative auth-pass-inputgroup mb-3">
                         <Input
                           name="email"
-                          className="form-control pe-5"
+                          className="form-control pe-5 quantum-input"
                           placeholder="example@domain.com"
                           type="text"
                           onBlur={validation.handleBlur}
@@ -353,11 +324,11 @@ function SignInBasic() {
                       </div>
                     </Col>
                     <Col xs={12} md={4}>
-                      <Label htmlFor="password">Password</Label>
+                      <Label className="quantum-label" htmlFor="password">Password</Label>
                       <div className="position-relative auth-pass-inputgroup mb-3">
                         <Input
                           name="password"
-                          className="form-control pe-5"
+                          className="form-control pe-5 quantum-input"
                           placeholder="* * * * * * *"
                           type="password"
                           onBlur={validation.handleBlur}
@@ -378,7 +349,7 @@ function SignInBasic() {
                       </div>
                     </Col>
                     <Col xs={12} md={4}>
-                      <Label className={"form-check-label"} htmlFor="Basic">
+                      <Label className="quantum-label form-check-label" htmlFor="Basic">
                         Gender
                       </Label>
                       <Row>
@@ -393,7 +364,7 @@ function SignInBasic() {
                               onChange={validation.handleChange}
                               checked={validation.values.gender === "m"}
                             />
-                            <Label className="form-check-label" htmlFor="Male">
+                            <Label className="form-check-label quantum-label" htmlFor="Male">
                               Male
                             </Label>
                           </div>
@@ -409,10 +380,7 @@ function SignInBasic() {
                               onChange={validation.handleChange}
                               checked={validation.values.gender === "f"}
                             />
-                            <Label
-                              className="form-check-label"
-                              htmlFor="gender"
-                            >
+                            <Label className="form-check-label quantum-label" htmlFor="gender">
                               Female
                             </Label>
                           </div>
@@ -424,7 +392,7 @@ function SignInBasic() {
                   <Row>
                     <Col xs={12} md={4}>
                       <FormGroup>
-                        <Label htmlFor="bdate">Date of Birth</Label>
+                        <Label className="quantum-label" htmlFor="bdate">Date of Birth</Label>
                         <div className="position-relative auth-pass-inputgroup mb-3">
                           <DatePicker
                             onChange={(e) => {
@@ -437,6 +405,7 @@ function SignInBasic() {
                             disabled={APIWorking}
                             value={validation.values.bdate}
                             maxDate={new Date()}
+                            className="quantum-datepicker"
                           />
                           <br />
                           {validation.errors.bdate &&
@@ -451,11 +420,11 @@ function SignInBasic() {
                       </FormGroup>
                     </Col>
                     <Col md={8}>
-                      <Label htmlFor="address">Address</Label>
+                      <Label className="quantum-label" htmlFor="address">Address</Label>
                       <div className="position-relative auth-pass-inputgroup mb-3">
                         <Input
                           name="address"
-                          className="form-control pe-5"
+                          className="form-control pe-5 quantum-input"
                           placeholder="Your address here....."
                           type="text"
                           onBlur={validation.handleBlur}
@@ -479,11 +448,7 @@ function SignInBasic() {
 
                   <div className="mt-2">
                     <Button
-                      color="info"
-                      className={`btn btn-info w-100`}
-                      style={{
-                        height: "7vh",
-                      }}
+                      className="quantum-btn w-100"
                       type="submit"
                       disabled={APIWorking}
                     >
@@ -495,7 +460,7 @@ function SignInBasic() {
               <Row className="mt-2">
                 <Col className="text-center">
                   <Button
-                    className="btn-link text-info"
+                    className="quantum-link"
                     onClick={() => setisLogin(true)}
                   >
                     Click here to Login
@@ -511,17 +476,7 @@ function SignInBasic() {
 
   return (
     <>
-      <div
-        className="content"
-        style={{
-          background: `linear-gradient(rgba(0, 0, 0, 0.8), rgba(15, 15, 15, 0.1)), url(${bgImage})`,
-          width: "100vw",
-          height: "100vh",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-          backgroundSize: "cover",
-        }}
-      >
+      <div className="quantum-auth">
         <Container>
           <ToastContainer />
           <Row

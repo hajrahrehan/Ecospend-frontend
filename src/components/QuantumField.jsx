@@ -1,53 +1,41 @@
-import React, { useRef, useMemo } from 'react'
-import { useFrame } from '@react-three/fiber'
-import { Stars, Float } from '@react-three/drei'
-import { EffectComposer, Bloom, ChromaticAberration } from '@react-three/postprocessing'
-import { BlendFunction } from 'postprocessing'
+import React, { useRef, useMemo, useEffect, memo, useState, lazy, Suspense } from 'react'
+import { Stars } from '@react-three/drei'
+import { useThree } from '@react-three/fiber'
 import * as THREE from 'three'
+import { useQuantumWorker } from '../hooks/useQuantumWorker'
+import { eventBus, EVENTS } from '../lib/eventBus'
+
+const QuantumFieldFX = lazy(() => import('./QuantumFieldFX'))
 
 // Schrödinger wave packet — particle probability density
 // ψ(x,t) = A·exp(-(x-x₀)²/4σ²) · exp(i(k₀x - ωt))
 // |ψ|² = A²·exp(-(x-x₀)²/2σ²)  ← Gaussian probability cloud
 
-const QuantumField = ({ count = 2000 }) => {
+const QuantumField = ({ maxCount = 1200, initialCount = 800, performanceLevel = 'high', reducedMotion = false }) => {
   const mesh = useRef()
-  const time = useRef(0)
+  const { invalidate } = useThree()
+  const [fxQuality, setFxQuality] = useState(performanceLevel)
 
-  const { positions, velocities, phases, sizes } = useMemo(() => {
-    const positions = new Float32Array(count * 3)
-    const velocities = new Float32Array(count * 3)
-    const phases    = new Float32Array(count)
-    const sizes     = new Float32Array(count)
-    
-    for (let i = 0; i < count; i++) {
-      // Box-Muller transform for Gaussian spatial distribution
-      // Models quantum ground-state probability cloud
-      const u1 = Math.random(), u2 = Math.random()
-      const r  = Math.sqrt(-2 * Math.log(u1))
-      positions[i*3]   = r * Math.cos(2*Math.PI*u2) * 12
-      positions[i*3+1] = r * Math.sin(2*Math.PI*u2) * 6
-      positions[i*3+2] = (Math.random() - 0.5) * 20
-      
-      // Maxwell-Boltzmann velocity distribution
-      // f(v) = 4π(m/2πkT)^(3/2) · v² · exp(-mv²/2kT)
-      const thermal = 0.008
-      velocities[i*3]   = (Math.random() - 0.5) * thermal
-      velocities[i*3+1] = (Math.random() - 0.5) * thermal
-      velocities[i*3+2] = (Math.random() - 0.5) * thermal
-      
+  const { worker } = useQuantumWorker()
+
+  const { phases, sizes, timeRef } = useMemo(() => {
+    const phases = new Float32Array(maxCount)
+    const sizes  = new Float32Array(maxCount)
+    for (let i = 0; i < maxCount; i++) {
       phases[i] = Math.random() * Math.PI * 2
       sizes[i]  = Math.random() * 3 + 0.5
     }
-    return { positions, velocities, phases, sizes }
-  }, [count])
+    return { phases, sizes, timeRef: { current: 0 } }
+  }, [maxCount])
 
   const geometry = useMemo(() => {
     const geo = new THREE.BufferGeometry()
-    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+    // Initial empty array, will be populated by worker
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(maxCount * 3), 3))
     geo.setAttribute('aPhase',   new THREE.BufferAttribute(phases, 1))
     geo.setAttribute('aSize',    new THREE.BufferAttribute(sizes, 1))
     return geo
-  }, [positions, phases, sizes])
+  }, [maxCount, phases, sizes])
 
   // Custom shader material — quantum superposition shimmer
   const material = useMemo(() => new THREE.ShaderMaterial({
@@ -94,26 +82,37 @@ const QuantumField = ({ count = 2000 }) => {
     blending: THREE.AdditiveBlending,
   }), [])
 
-  useFrame((state) => {
-    time.current += 0.016
-    material.uniforms.uTime.value = time.current
-    
-    const pos = geometry.attributes.position.array
-    for (let i = 0; i < count; i++) {
-      // Langevin dynamics — Brownian motion in a potential well
-      // dp/dt = -γp + √(2γmkT)·ξ(t)
-      // where ξ(t) is Gaussian white noise
-      pos[i*3]   += velocities[i*3]   + (Math.random()-0.5) * 0.001
-      pos[i*3+1] += velocities[i*3+1] + (Math.random()-0.5) * 0.001
-      pos[i*3+2] += velocities[i*3+2]
-      
-      // Periodic boundary — toroidal space
-      if (Math.abs(pos[i*3])   > 15) pos[i*3]   *= -0.98
-      if (Math.abs(pos[i*3+1]) > 8)  pos[i*3+1] *= -0.98
-      if (Math.abs(pos[i*3+2]) > 12) pos[i*3+2] *= -0.98
+  // Event driven zero-copy updates
+  useEffect(() => {
+    if (worker) {
+      worker.postMessage({ type: 'START' })
     }
-    geometry.attributes.position.needsUpdate = true
-  })
+
+    const onTick = (payload) => {
+      // 1. Direct memory layout copy to ThreeJS buffer
+      const posAttr = geometry.attributes.position
+      posAttr.array.set(payload.positions)
+      posAttr.needsUpdate = true
+      geometry.setDrawRange(0, payload.count || initialCount)
+
+      // 2. Uniform update
+      timeRef.current += 0.016
+      material.uniforms.uTime.value = timeRef.current
+
+      // 3. Relinquish ownership back to worker (Zero-copy transfer)
+      // This ensures we aren't leaking memory on the main thread and keeping allocations pool stable
+      worker?.postMessage(
+        { type: 'RETURN_BUFFER', payload: payload.positions },
+        [payload.positions.buffer]
+      )
+
+      // Demand-driven render tick
+      invalidate()
+    }
+    
+    eventBus.on(EVENTS.QUANTUM_TICK, onTick)
+    return () => eventBus.off(EVENTS.QUANTUM_TICK, onTick)
+  }, [geometry, material, worker, timeRef, invalidate, initialCount])
 
   // Cleanup effect
   React.useEffect(() => {
@@ -123,43 +122,27 @@ const QuantumField = ({ count = 2000 }) => {
     }
   }, [geometry, material])
 
+  useEffect(() => {
+    setFxQuality(performanceLevel)
+  }, [performanceLevel])
+
+  const bloomIntensity = reducedMotion ? 0.2 : fxQuality === 'low' ? 0.25 : 0.35
+  const chromaOffset = reducedMotion ? 0.0001 : fxQuality === 'low' ? 0.00015 : 0.0002
+
   return (
     <>
       {/* Deep star field — galactic background */}
-      <Stars radius={100} depth={60} count={4000} factor={3} saturation={0.3} fade speed={0.5} />
+      <Stars radius={100} depth={60} count={1200} factor={2} saturation={0.2} fade speed={reducedMotion ? 0.1 : 0.3} />
       
       {/* Quantum particle cloud */}
       <points ref={mesh} geometry={geometry} material={material} />
       
-      {/* Ambient nebula — 3 floating color clouds */}
-      {[
-        { pos: [-4, 2, -8], color: '#7B4FFF', scale: 3 },
-        { pos: [5, -2, -10], color: '#00D4FF', scale: 4 },
-        { pos: [0, 4, -12], color: '#FFB830', scale: 2 },
-      ].map((n, i) => (
-        <Float key={i} speed={0.5} rotationIntensity={0.1} floatIntensity={0.3}>
-          <mesh position={n.pos}>
-            <sphereGeometry args={[n.scale, 8, 8]} />
-            <meshBasicMaterial color={n.color} transparent opacity={0.015} />
-          </mesh>
-        </Float>
-      ))}
-      
       {/* Post-processing stack */}
-      <EffectComposer>
-        <Bloom
-          luminanceThreshold={0.3}
-          intensity={0.8}
-          mipmapBlur
-          blendFunction={BlendFunction.ADD}
-        />
-        <ChromaticAberration
-          offset={[0.0005, 0.0005]}
-          blendFunction={BlendFunction.NORMAL}
-        />
-      </EffectComposer>
+      <Suspense fallback={null}>
+        <QuantumFieldFX bloomIntensity={bloomIntensity} chromaOffset={chromaOffset} />
+      </Suspense>
     </>
   )
 }
 
-export default QuantumField
+export default memo(QuantumField)

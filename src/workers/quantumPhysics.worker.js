@@ -6,25 +6,62 @@ let isRunning = false
 let time = 0
 let lastFrameTime = performance.now()
 let tps = 60
+let lastDt = 16.6
 
 // Mutable Arrays for physics tracking
-let positions = new Float32Array(particlesCount * 3)
 let phases = new Float32Array(particlesCount)
 let targetCounts = particlesCount
 
-const updateParticles = () => {
+const bufferPool = []
+const MAX_POOL = 3
+
+const ensurePool = (size) => {
+  bufferPool.length = 0
+  for (let i = 0; i < MAX_POOL; i++) {
+    bufferPool.push(new Float32Array(size))
+  }
+}
+
+const acquireBuffer = (size) => {
+  if (bufferPool.length > 0) {
+    const buf = bufferPool.pop()
+    if (buf.length === size) return buf
+  }
+  return new Float32Array(size)
+}
+
+const releaseBuffer = (buffer) => {
+  if (!buffer || bufferPool.length >= MAX_POOL) return
+  if (buffer.length === particlesCount * 3) bufferPool.push(buffer)
+}
+
+const resizeParticles = (nextCount) => {
+  if (nextCount === particlesCount) return
+  const prevCount = particlesCount
+  particlesCount = nextCount
+  const nextPhases = new Float32Array(particlesCount)
+  nextPhases.set(phases.subarray(0, Math.min(prevCount, particlesCount)))
+  for (let i = prevCount; i < particlesCount; i++) {
+    nextPhases[i] = Math.random() * Math.PI * 2
+  }
+  phases = nextPhases
+  ensurePool(particlesCount * 3)
+}
+
+const updateParticles = (writeBuffer) => {
   const currentFrameTime = performance.now()
   const dt = currentFrameTime - lastFrameTime
   lastFrameTime = currentFrameTime
+  lastDt = dt
 
   // Dynamic Scaling
-  if (dt > 16.6) {
-    if (particlesCount > 800) particlesCount -= 100
-  } else if (dt < 4 && particlesCount < targetCounts) {
-    particlesCount += 50
+  if (dt > 18) {
+    if (particlesCount > 800) resizeParticles(Math.max(800, particlesCount - 100))
+  } else if (dt < 6 && particlesCount < targetCounts) {
+    resizeParticles(Math.min(targetCounts, particlesCount + 50))
   }
 
-  // Update in place (Zero allocation!)
+  // Update in place (Zero allocation!) into the write buffer
   for (let i = 0; i < particlesCount; i++) {
     const i3 = i * 3
     phases[i] += 0.02
@@ -34,9 +71,9 @@ const updateParticles = () => {
     const pz = (Math.cos(time * 0.3 + phases[i]) * 15)
     
     // Add noise based turbulence
-    positions[i3] = px
-    positions[i3 + 1] = Math.sin(time + phases[i]) * (3 + Math.sin(px * 0.1))
-    positions[i3 + 2] = pz
+    writeBuffer[i3] = px
+    writeBuffer[i3 + 1] = Math.sin(time + phases[i]) * (3 + Math.sin(px * 0.1))
+    writeBuffer[i3 + 2] = pz
   }
 
   time += 0.016
@@ -45,19 +82,16 @@ const updateParticles = () => {
 const loop = () => {
   if (!isRunning) return
   
-  updateParticles()
-  
-  // Allocate transferable buffers (assuming main thread owns previous ones)
-  // To strictly use transferable, we slice and copy our local track array and send underlying ArrayBuffer
-  // Note: Standard structured clone algorithm permits ArrayBuffers in the transfer list.
-  const transferPos = new Float32Array(positions.slice(0, particlesCount * 3))
+  const transferPos = acquireBuffer(particlesCount * 3)
+  updateParticles(transferPos)
   
   self.postMessage(
     { 
       type: 'QUANTUM_TICK', 
       payload: { 
         positions: transferPos, 
-        count: particlesCount 
+        count: particlesCount,
+        dt: lastDt
       }
     },
     [transferPos.buffer]
@@ -72,10 +106,10 @@ self.onmessage = (e) => {
   const { type, payload } = e.data
   switch (type) {
     case 'INIT': {
-      targetCounts = payload.maxParticles || 2000
-      particlesCount = targetCounts
-      positions = new Float32Array(particlesCount * 3)
+      targetCounts = payload.maxParticles || 1200
+      particlesCount = payload.startParticles || Math.min(800, targetCounts)
       phases = new Float32Array(particlesCount)
+      ensurePool(particlesCount * 3)
       
       // Initialize layout
       for (let i = 0; i < particlesCount; i++) {
@@ -92,6 +126,19 @@ self.onmessage = (e) => {
       break
     case 'PAUSE':
       isRunning = false
+      break
+    case 'SLEEP':
+      isRunning = false
+      break
+    case 'WAKE':
+      if (!isRunning) {
+        isRunning = true
+        lastFrameTime = performance.now()
+        loop()
+      }
+      break
+    case 'RETURN_BUFFER':
+      releaseBuffer(payload)
       break
     case 'SET_REDUCED_MOTION':
       tps = payload.reduced ? 15 : 60 // Dial down TPS severely on reduced motion

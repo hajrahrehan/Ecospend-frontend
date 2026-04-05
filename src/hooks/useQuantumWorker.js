@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useTransition } from 'react'
+import { useEffect, useRef, useTransition } from 'react'
 
 let sharedPhysicsWorker = null
 let sharedCanvasWorker = null
@@ -7,7 +7,16 @@ const getPhysicsWorker = () => {
   if (typeof Worker !== 'undefined') {
     if (!sharedPhysicsWorker) {
       sharedPhysicsWorker = new Worker(new URL('../workers/quantumPhysics.worker.js', import.meta.url))
-      sharedPhysicsWorker.postMessage({ type: 'INIT', payload: { maxParticles: 2000 } })
+      sharedPhysicsWorker.postMessage({ type: 'INIT', payload: { maxParticles: 1200, startParticles: 800 } })
+      
+      sharedPhysicsWorker.onmessage = (e) => {
+        const { type, payload } = e.data
+        if (type === 'QUANTUM_TICK') {
+          import('../lib/eventBus').then(({ eventBus, EVENTS }) => {
+            eventBus.emit(EVENTS.QUANTUM_TICK, payload)
+          })
+        }
+      }
     }
   }
   return sharedPhysicsWorker

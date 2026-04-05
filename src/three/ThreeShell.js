@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { CSS3DObject, CSS3DRenderer } from "three/examples/jsm/renderers/CSS3DRenderer";
 import { SlotRegistryContext } from "./SlotRegistry";
 import { RoomMotionContext } from "./RoomMotion";
+import { eventBus, EVENTS } from "../lib/eventBus";
 
 const ThreeShell = ({ children, slots = [] }) => {
   const webglHostRef = useRef(null);
@@ -397,7 +398,6 @@ const ThreeShell = ({ children, slots = [] }) => {
     geometries.push(starGeometry);
     materials.push(starMaterial);
 
-    let frameId = null;
     let mouseX = 0;
     let mouseY = 0;
     const clock = new THREE.Clock();
@@ -420,7 +420,7 @@ const ThreeShell = ({ children, slots = [] }) => {
 
     const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
-    const animate = () => {
+    const renderFrame = () => {
       const elapsed = clock.getElapsedTime();
       const wallBreath = Math.sin(elapsed * 0.35) * 18;
       const wallShift = Math.cos(elapsed * 0.28) * 22;
@@ -498,13 +498,13 @@ const ThreeShell = ({ children, slots = [] }) => {
 
       renderer.render(scene, camera);
       cssRenderer.render(scene, camera);
-      frameId = requestAnimationFrame(animate);
     };
 
-    animate();
+    eventBus.on(EVENTS.QUANTUM_TICK, renderFrame);
+    renderFrame();
 
     return () => {
-      if (frameId) cancelAnimationFrame(frameId);
+      eventBus.off(EVENTS.QUANTUM_TICK, renderFrame);
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("resize", handleResize);
 

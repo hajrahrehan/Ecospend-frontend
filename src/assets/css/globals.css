@@ -54,3 +54,90 @@ body::after {
   pointer-events: none;
   z-index: 9999;
 }
+
+/* Quantum auth screens */
+.quantum-auth {
+  min-height: 100vh;
+  width: 100vw;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(0, 212, 255, 0.08), transparent 35%),
+    radial-gradient(circle at 80% 30%, rgba(123, 79, 255, 0.08), transparent 40%),
+    radial-gradient(circle at 50% 80%, rgba(0, 255, 135, 0.06), transparent 45%),
+    var(--eco-void);
+  position: relative;
+  overflow: hidden;
+}
+.quantum-auth::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(90deg, transparent 39px, rgba(0,212,255,0.05) 40px),
+                    linear-gradient(rgba(0,212,255,0.05) 39px, transparent 40px);
+  background-size: 40px 40px;
+  opacity: 0.25;
+  pointer-events: none;
+}
+.quantum-card {
+  background: rgba(10, 22, 40, 0.85) !important;
+  border: 1px solid rgba(0, 212, 255, 0.2) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 0 80px rgba(0,212,255,0.08);
+  overflow: hidden;
+}
+.quantum-card-header {
+  padding: 22px 24px 18px;
+  background: linear-gradient(135deg, rgba(0,212,255,0.15), rgba(123,79,255,0.15));
+  border-bottom: 1px solid rgba(0,212,255,0.15);
+  text-align: center;
+}
+.quantum-card-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  letter-spacing: 0.2em;
+  color: #fff;
+}
+.quantum-card-title span { color: var(--eco-quantum); }
+.quantum-card-sub {
+  font-family: var(--font-data);
+  font-size: 10px;
+  letter-spacing: 0.35em;
+  color: rgba(0,212,255,0.6);
+  margin-top: 6px;
+}
+.quantum-label {
+  color: rgba(0,212,255,0.7) !important;
+  font-family: var(--font-data) !important;
+  font-size: 11px !important;
+  letter-spacing: 0.2em !important;
+}
+.quantum-input {
+  background: rgba(0,212,255,0.05) !important;
+  border: 1px solid rgba(0,212,255,0.2) !important;
+  color: #fff !important;
+  font-family: var(--font-data) !important;
+  border-radius: 10px !important;
+}
+.quantum-input:focus {
+  box-shadow: 0 0 20px rgba(0,212,255,0.2) !important;
+  border-color: rgba(0,212,255,0.6) !important;
+}
+.quantum-btn {
+  background: linear-gradient(135deg, rgba(0,212,255,0.25), rgba(123,79,255,0.25)) !important;
+  border: 1px solid rgba(0,212,255,0.4) !important;
+  color: #fff !important;
+  font-family: var(--font-display) !important;
+  letter-spacing: 0.2em !important;
+  height: 7vh;
+}
+.quantum-link {
+  color: var(--eco-quantum) !important;
+  font-family: var(--font-data) !important;
+  letter-spacing: 0.12em !important;
+}
+.quantum-datepicker {
+  background: rgba(0,212,255,0.05);
+  border: 1px solid rgba(0,212,255,0.2);
+  color: #fff;
+  border-radius: 10px;
+  padding: 6px;
+}

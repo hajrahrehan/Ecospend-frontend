@@ -1,13 +1,17 @@
 import mitt from 'mitt'
 
-export const EVENTS = {
-  QUANTUM_TICK: Symbol('QUANTUM_TICK'),
-  TRANSACTION_COLLISION: Symbol('TRANSACTION_COLLISION'),
-  XP_GAIN: Symbol('XP_GAIN'),
-  BEAM_FIRED: Symbol('BEAM_FIRED'),
-  LEVEL_UP: Symbol('LEVEL_UP'),
-  FIELD_UPDATE: Symbol('FIELD_UPDATE')
-}
+/**
+ * Canonical event names for the EcoSpend quantum bus.
+ * Strings keep interoperability with Workers and debug tooling.
+ */
+export const EVENTS = Object.freeze({
+  QUANTUM_TICK: 'QUANTUM_TICK',
+  TRANSACTION_COLLISION: 'TRANSACTION_COLLISION',
+  XP_GAIN: 'XP_GAIN',
+  BEAM_FIRED: 'BEAM_FIRED',
+  LEVEL_UP: 'LEVEL_UP',
+  FIELD_UPDATE: 'FIELD_UPDATE',
+})
 
 // Global robust event bus for out-of-bounds cross-component and worker communication
 export const eventBus = mitt()

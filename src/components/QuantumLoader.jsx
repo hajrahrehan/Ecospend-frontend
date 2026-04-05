@@ -1,26 +1,26 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, memo } from 'react'
 import { motion } from 'framer-motion'
-import { waveProbability } from '../lib/physics'
+import { getCanvasWorker } from '../hooks/useQuantumWorker'
 
 // For page-level loading — wave collapse visualization
-export const WaveCollapseLoader = ({ label = 'INITIALIZING QUANTUM STATE' }) => {
+export const WaveCollapseLoader = memo(({ label = 'INITIALIZING QUANTUM STATE' }) => {
   const canvasRef = useRef()
+
   useEffect(() => {
     const canvas = canvasRef.current
-    const ctx = canvas.getContext('2d')
-    let t = 0, raf
-    const draw = () => {
-      ctx.clearRect(0, 0, 200, 40)
-      for (let x = 0; x < 200; x++) {
-        const collapse = Math.min(t / 120, 1)
-        const psi = waveProbability(x, t, 100, 80 * (1 - collapse * 0.85), 0.06, 20)
-        const h = psi * 35
-        ctx.fillStyle = `rgba(0,212,255,${Math.min(psi * 6, 0.9)})`
-        ctx.fillRect(x, 40 - h, 1, h)
-      }
-      t += 0.5; raf = requestAnimationFrame(draw)
+    const worker = getCanvasWorker()
+    
+    if (canvas && typeof canvas.transferControlToOffscreen === 'function' && !canvas.hasTransferred) {
+      const offscreen = canvas.transferControlToOffscreen()
+      canvas.hasTransferred = true
+      worker?.postMessage({ type: 'INIT_OFFSCREEN', id: 'loaderWave', canvas: offscreen }, [offscreen])
     }
-    draw(); return () => cancelAnimationFrame(raf)
+    
+    if (worker) {
+      worker.postMessage({ type: 'START_WAVE', id: 'loaderWave' })
+    }
+
+    return () => worker?.postMessage({ type: 'STOP', id: 'loaderWave' })
   }, [])
 
   return (

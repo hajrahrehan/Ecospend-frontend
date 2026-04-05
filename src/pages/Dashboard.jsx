@@ -1,92 +1,51 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState, useTransition, memo } from 'react'
 import { motion } from 'framer-motion'
 import { useSpring, animated } from '@react-spring/web'
-import { wealthEnergy, keplerPosition } from '../lib/physics'
+import { wealthEnergy } from '../lib/physics'
+import { useNavigate } from 'react-router-dom'
 
-// ─── Balance Gravity Well — the centrepiece ───────────────────────────────
-// Balance is visualized as a gravity well whose depth = wealthEnergy(balance)
-// Orbiting rings represent financial health metrics
-const BalanceGravityWell = ({ balance }) => {
+import { getCanvasWorker } from '../hooks/useQuantumWorker'
+import * as ApiManager from '../helpers/ApiManager.tsx'
+
+// ─── Balance Gravity Well — the centrepiece (OffscreenCanvas) ────────────────
+const BalanceGravityWell = memo(({ balance }) => {
   const energy = wealthEnergy(balance)
   const canvasRef = useRef()
+  const workerRef = useRef()
 
   useEffect(() => {
-    const canvas = canvasRef.current
-    const ctx = canvas.getContext('2d')
-    const W = canvas.width, H = canvas.height
-    const cx = W / 2, cy = H / 2
-    let t = 0, raf
-
-    const rings = [
-      { rx: 80 * energy + 30, ry: 30, speed: 0.008, color: '#00D4FF', label: 'BALANCE' },
-      { rx: 110 * energy + 40, ry: 42, speed: -0.005, color: '#00FF87', label: 'INCOME' },
-      { rx: 140 * energy + 50, ry: 55, speed: 0.003, color: '#7B4FFF', label: 'SPEND' },
-    ]
-
-    const draw = () => {
-      ctx.clearRect(0, 0, W, H)
-
-      // Draw gravity well depression (concentric circles fading outward)
-      for (let r = 5; r < 120; r += 8) {
-        const intensity = Math.max(0, 1 - r / 120) * energy
-        ctx.beginPath()
-        ctx.arc(cx, cy, r, 0, Math.PI * 2)
-        ctx.strokeStyle = `rgba(0,212,255,${intensity * 0.3})`
-        ctx.lineWidth = 0.5
-        ctx.stroke()
-      }
-
-      // Central singularity — pulsing core
-      const pulse = 0.8 + 0.2 * Math.sin(t * 3)
-      const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, 20 * pulse)
-      grd.addColorStop(0, 'rgba(0,212,255,0.9)')
-      grd.addColorStop(0.4, 'rgba(0,212,255,0.3)')
-      grd.addColorStop(1, 'transparent')
-      ctx.fillStyle = grd
-      ctx.beginPath()
-      ctx.arc(cx, cy, 20 * pulse, 0, Math.PI * 2)
-      ctx.fill()
-
-      // Draw orbital rings + traveling nodes
-      rings.forEach((ring, i) => {
-        // Elliptical orbit path
-        ctx.beginPath()
-        ctx.ellipse(cx, cy, ring.rx, ring.ry, Math.PI / 6 * i, 0, Math.PI * 2)
-        ctx.strokeStyle = `${ring.color}20`
-        ctx.lineWidth = 0.5
-        ctx.stroke()
-
-        // Kepler position of traveling dot
-        const pos = keplerPosition(t, ring.rx, ring.ry, ring.speed, i * Math.PI * 0.66)
-        const dx = pos.x * Math.cos(Math.PI / 6 * i) - pos.y * Math.sin(Math.PI / 6 * i)
-        const dy = pos.x * Math.sin(Math.PI / 6 * i) + pos.y * Math.cos(Math.PI / 6 * i)
-
-        const dotGrd = ctx.createRadialGradient(cx + dx, cy + dy, 0, cx + dx, cy + dy, 8)
-        dotGrd.addColorStop(0, ring.color + 'FF')
-        dotGrd.addColorStop(1, ring.color + '00')
-        ctx.fillStyle = dotGrd
-        ctx.beginPath()
-        ctx.arc(cx + dx, cy + dy, 8, 0, Math.PI * 2)
-        ctx.fill()
-
-        ctx.fillStyle = '#fff'
-        ctx.beginPath()
-        ctx.arc(cx + dx, cy + dy, 2, 0, Math.PI * 2)
-        ctx.fill()
-      })
-
-      t += 0.016
-      raf = requestAnimationFrame(draw)
+    // Only init transfer once
+    if (canvasRef.current && !workerRef.current && typeof canvasRef.current.transferControlToOffscreen === 'function') {
+      const offscreen = canvasRef.current.transferControlToOffscreen()
+      workerRef.current = getCanvasWorker()
+      workerRef.current.postMessage({ type: 'INIT_OFFSCREEN', id: 'gravityWell', canvas: offscreen }, [offscreen])
     }
-    draw()
-    return () => cancelAnimationFrame(raf)
-  }, [balance, energy])
+    
+    // Fallback if no offscreen support
+    if (!workerRef.current && canvasRef.current) {
+        // Very basic fallback drawing, to skip worker
+        const ctx = canvasRef.current.getContext('2d')
+        ctx.clearRect(0,0,340,240)
+        ctx.fillStyle = '#00D4FF11'
+        ctx.fillRect(0,0,340,240)
+    }
+
+    if (workerRef.current) {
+      workerRef.current.postMessage({ type: 'START_BALANCE_WELL', id: 'gravityWell', payload: { energy } })
+    }
+
+    return () => {
+      if (workerRef.current) {
+        workerRef.current.postMessage({ type: 'STOP', id: 'gravityWell' })
+      }
+    }
+  }, [energy])
 
   return (
     <canvas ref={canvasRef} width={340} height={240}
       style={{ display: 'block', margin: '0 auto' }} />
   )
-}
+})
 
 // ─── Balance Number — Relativistic counter ────────────────────────────────
 const BalanceCounter = ({ value, currency = 'PKR' }) => {
@@ -121,7 +80,7 @@ const BalanceCounter = ({ value, currency = 'PKR' }) => {
 }
 
 // ─── Transaction Feed — "Particle Collision Events" ───────────────────────
-const TransactionCollisionLog = ({ transactions }) => (
+const TransactionCollisionLog = memo(({ transactions }) => (
   <motion.div
     initial="hidden"
     animate="visible"
@@ -189,19 +148,113 @@ const TransactionCollisionLog = ({ transactions }) => (
       )
     })}
   </motion.div>
-)
+))
 
 const DashboardPage = () => {
-  const dummyTransactions = [
-    { id: 1, type: 'credit', amount: 45000, description: 'Direct Deposit', date: 'Oct 12' },
-    { id: 2, type: 'debit', amount: 1250, description: 'Coffee Station', date: 'Oct 11' },
-    { id: 3, type: 'debit', amount: 15000, description: 'Power Recharge', date: 'Oct 10' },
-  ]
+  const [, startTransition] = useTransition()
+  const [user, setUser] = useState(null)
+  const [transactions, setTransactions] = useState([])
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    let isActive = true
+    const fetchData = async () => {
+      const res = await ApiManager.UserInfo()
+      if (!res?.data) return
+      const statement = await ApiManager.GetStatement({
+        start: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
+      })
+      if (!isActive) return
+      setUser(res.data.user)
+      const list = (statement?.data || []).slice(0, 6).map((tx) => ({
+        id: tx._id,
+        type: tx.type,
+        amount: tx.credit || tx.debit || 0,
+        description: tx.name,
+        date: new Date(tx.time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      }))
+      setTransactions(list)
+    }
+    fetchData()
+    return () => { isActive = false }
+  }, [])
   
   return (
-    <div style={{ padding: '40px 20px', maxWidth: '600px', margin: '0 auto' }}>
-      <BalanceGravityWell balance={250000} />
-      <BalanceCounter value={250000} />
+    <div style={{ maxWidth: '700px', margin: '0 auto' }}>
+      <BalanceGravityWell balance={user?.balance || 0} />
+      <BalanceCounter value={user?.balance || 0} />
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: 12,
+        marginTop: 12,
+        color: '#fff',
+        fontFamily: 'var(--font-data)',
+        fontSize: 12,
+      }}>
+        <div style={{ background: 'rgba(10,22,40,0.6)', border: '1px solid rgba(0,212,255,0.08)', borderRadius: 10, padding: 12 }}>
+          ACCOUNT NUMBER
+          <div style={{ marginTop: 6, color: 'var(--eco-quantum)', letterSpacing: '0.15em' }}>{user?.account_no || '—'}</div>
+        </div>
+        <div style={{ background: 'rgba(10,22,40,0.6)', border: '1px solid rgba(0,212,255,0.08)', borderRadius: 10, padding: 12 }}>
+          ACCOUNT LEVEL
+          <div style={{ marginTop: 6, color: 'var(--eco-solar)', letterSpacing: '0.1em' }}>{user?.type || 'Standard'}</div>
+        </div>
+      </div>
+      <div style={{ display: 'grid', gap: 12, marginTop: 18 }}>
+        <motion.button
+          onClick={() => startTransition(() => navigate('/main/transfer'))}
+          whileHover={{ scale: 1.02 }}
+          style={{
+            width: '100%',
+            padding: '14px 16px',
+            background: 'linear-gradient(135deg, rgba(0,212,255,0.18), rgba(123,79,255,0.18))',
+            border: '1px solid rgba(0,212,255,0.35)',
+            borderRadius: 12,
+            color: '#fff',
+            fontFamily: 'var(--font-display)',
+            letterSpacing: '0.2em',
+            cursor: 'pointer',
+            boxShadow: '0 0 30px rgba(0,212,255,0.15)',
+          }}
+        >
+          QUICK SEND MONEY
+        </motion.button>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+          <motion.button
+            onClick={() => startTransition(() => navigate('/main/ecoai'))}
+            whileHover={{ scale: 1.02 }}
+            style={{
+              padding: '12px 14px',
+              background: 'rgba(0,212,255,0.08)',
+              border: '1px solid rgba(0,212,255,0.25)',
+              borderRadius: 12,
+              color: '#fff',
+              fontFamily: 'var(--font-display)',
+              letterSpacing: '0.15em',
+              cursor: 'pointer',
+            }}
+          >
+            OPEN ECOAI
+          </motion.button>
+          <motion.button
+            onClick={() => startTransition(() => navigate('/main/ecomall'))}
+            whileHover={{ scale: 1.02 }}
+            style={{
+              padding: '12px 14px',
+              background: 'rgba(123,79,255,0.12)',
+              border: '1px solid rgba(123,79,255,0.35)',
+              borderRadius: 12,
+              color: '#fff',
+              fontFamily: 'var(--font-display)',
+              letterSpacing: '0.15em',
+              cursor: 'pointer',
+            }}
+          >
+            VISIT ECOMALL
+          </motion.button>
+        </div>
+      </div>
       <h3 style={{
         fontFamily: 'var(--font-display)', color: '#fff', fontSize: '18px',
         borderBottom: '1px solid rgba(0,212,255,0.2)', paddingBottom: '10px', marginTop: '40px',
@@ -209,7 +262,7 @@ const DashboardPage = () => {
       }}>
         PARTICLE COLLISION LOG
       </h3>
-      <TransactionCollisionLog transactions={dummyTransactions} />
+      <TransactionCollisionLog transactions={transactions} />
     </div>
   )
 }

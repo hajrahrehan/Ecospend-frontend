@@ -18,6 +18,7 @@
     "formik": "2.4.6",
     "framer-motion": "^12.38.0",
     "howler": "^2.2.4",
+    "mitt": "^3.0.1",
     "moment": "2.29.4",
     "perfect-scrollbar": "1.5.5",
     "prop-types": "15.8.1",
@@ -39,7 +40,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "NODE_OPTIONS=--no-deprecation react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
     "install:clean": "rm -rf node_modules/ && rm -rf package-lock.json && npm install && npm start",
