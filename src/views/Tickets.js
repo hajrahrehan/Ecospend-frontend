@@ -26,9 +26,13 @@ function Beneficiary() {
     let isActive = true;
     const fetchData = async () => {
       const res = await ApiManager.UserTicketList();
-      if (isActive && res) {
-        setlogData(res.data.reverse());
-        setfilteredData(res.data);
+      if (isActive && res && Array.isArray(res.data)) {
+        const reversed = [...res.data].reverse();
+        setlogData(reversed);
+        setfilteredData(reversed);
+      } else if (isActive) {
+        setlogData([]);
+        setfilteredData([]);
       }
     };
 
@@ -105,7 +109,7 @@ function Beneficiary() {
                         {filteredData.map((user, i) => (
                           <tr key={i}>
                             <td>{user.message}</td>
-                            <td>{user.reply || "N/A"}</td>
+                            <td>{user.reply?.message || "N/A"}</td>
                             <td>
                               <Badge
                                 color={

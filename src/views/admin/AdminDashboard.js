@@ -26,9 +26,13 @@ function Dashboard() {
     let isActive = true;
     const fetchData = async () => {
       const res = await ApiManager.AdminTicketList();
-      if (isActive && res) {
-        setlogData(res.data.reverse());
-        setfilteredData(res.data);
+      if (isActive && res && Array.isArray(res.data)) {
+        const reversed = [...res.data].reverse();
+        setlogData(reversed);
+        setfilteredData(reversed);
+      } else if (isActive) {
+        setlogData([]);
+        setfilteredData([]);
       }
     };
 
@@ -92,32 +96,52 @@ function Dashboard() {
                     <Table className="tablesorter" responsive>
                       <thead className="text-primary">
                         <tr>
-                          <th>Ticket ID</th>
+                          <th>#</th>
+                          <th>From</th>
+                          <th>Subject</th>
                           <th>Message</th>
                           <th>Status</th>
                           <th>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredData.map((user, i) => (
+                        {filteredData.map((ticket, i) => (
                           <tr key={i}>
-                            <td>{i+1}</td>
-                            <td>{user.message}</td>
+                            <td>{i + 1}</td>
+                            <td>
+                              {ticket.userId ? (
+                                <>
+                                  <div style={{ fontWeight: 600 }}>
+                                    {ticket.userId.fname} {ticket.userId.lname}
+                                  </div>
+                                  <div style={{ fontSize: 12, color: "#888" }}>
+                                    {ticket.userId.email}
+                                  </div>
+                                  <div style={{ fontSize: 11, color: "#aaa" }}>
+                                    Acc: {ticket.userId.account_no}
+                                  </div>
+                                </>
+                              ) : (
+                                <span style={{ color: "#999" }}>Unknown</span>
+                              )}
+                            </td>
+                            <td>{ticket.subject || "-"}</td>
+                            <td>{ticket.message}</td>
                             <td>
                               <Badge
                                 color={
-                                  user.status === "active"
+                                  ticket.status === "open"
                                     ? "primary"
                                     : "secondary"
                                 }
                               >
-                                {user.status}
+                                {ticket.status}
                               </Badge>
                             </td>
                             <td colSpan={1}>
                               <Button
                                 className="btn-danger"
-                                onClick={() => ModalRef.current(true, user._id)}
+                                onClick={() => ModalRef.current(true, ticket._id)}
                               >
                                 Resolve
                               </Button>

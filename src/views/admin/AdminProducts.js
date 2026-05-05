@@ -102,7 +102,7 @@ function AdminProducts() {
               {showAdd && (
                 <Card
                   className="p-3 mb-4"
-                  style={{ background: "#fdf2f5" }}
+                  style={{ background: "#fff", border: "1px solid #f0d0d8" }}
                 >
                   <Row>
                     <Col md={3}>
@@ -132,14 +132,18 @@ function AdminProducts() {
                     </Col>
                     <Col md={3}>
                       <FormGroup>
-                        <Label>Image filename</Label>
+                        <Label>Image URL or filename</Label>
                         <Input
-                          placeholder="p1.png (optional)"
+                          placeholder="https://... or p1.png"
                           value={form.image}
                           onChange={(e) =>
                             setForm({ ...form, image: e.target.value })
                           }
                         />
+                        <small style={{ color: "#888", fontSize: 11 }}>
+                          Paste any image URL (e.g. from Unsplash) or use a local
+                          filename like p1.png
+                        </small>
                       </FormGroup>
                     </Col>
                     <Col md={3} className="d-flex align-items-end">

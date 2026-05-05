@@ -6,6 +6,7 @@ import Statement from "views/Statement.js";
 import Cards from "views/Cards.js";
 import Tickets from "views/Tickets.js";
 import Chat from "views/Chat.js";
+import Products from "layouts/nonauth/Products";
 // admin routes
 import AdminDashboard from "views/admin/AdminDashboard";
 import AdminUserList from "views/admin/AdminUserList";
@@ -65,6 +66,13 @@ var routes = [
     name: "EcoAI Chat",
     icon: "fa fa-solid fa-robot",
     component: <Chat />,
+    layout: "/main",
+  },
+  {
+    path: "/store",
+    name: "EcoMall",
+    icon: "fa fa-solid fa-store",
+    component: <Products />,
     layout: "/main",
   },
 

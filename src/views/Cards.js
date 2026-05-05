@@ -17,7 +17,7 @@ import Loader from "components/common/Loader.js";
 const moment = require("moment");
 
 function Cards() {
-  const [logData, setlogData] = useState([]);
+  const [logData, setlogData] = useState(null);
   const [filteredData, setfilteredData] = useState([]);
 
   useEffect(() => {
@@ -88,15 +88,30 @@ function Cards() {
                           <th>CVC</th>
                           <th>Expiration</th>
                           <th>Type</th>
+                          <th>Status</th>
                         </tr>
                       </thead>
                       <tbody>
                         {filteredData.map((card, i) => (
-                          <tr key={i}>
+                          <tr key={i} style={{ opacity: card.isblocked ? 0.5 : 1 }}>
                             <td>{card.cardnumber}</td>
                             <td>{card.cvc}</td>
                             <td>{moment(card.expiration).format("MM/YYYY")}</td>
                             <td>{card.type}</td>
+                            <td>
+                              <span
+                                style={{
+                                  padding: "4px 10px",
+                                  borderRadius: 12,
+                                  fontSize: 12,
+                                  fontWeight: 600,
+                                  background: card.isblocked ? "#f4b8c1" : "#a8d8b9",
+                                  color: card.isblocked ? "#8b2d3a" : "#2d5e3e",
+                                }}
+                              >
+                                {card.isblocked ? "Blocked" : "Active"}
+                              </span>
+                            </td>
                           </tr>
                         ))}
                       </tbody>

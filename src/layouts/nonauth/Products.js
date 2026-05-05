@@ -26,6 +26,29 @@ import { useFormik } from "formik";
 import { FormatNumber } from "helpers/utils.js";
 import moment from "moment";
 
+// Resolves an image: if it's a URL, returns as-is; if a local filename, requires it from assets
+const resolveImage = (img) => {
+  if (!img) {
+    try {
+      return require(`assets/img/products/p1.png`);
+    } catch (e) {
+      return "";
+    }
+  }
+  if (img.startsWith("http://") || img.startsWith("https://") || img.startsWith("data:")) {
+    return img;
+  }
+  try {
+    return require(`assets/img/products/${img}`);
+  } catch (e) {
+    try {
+      return require(`assets/img/products/p1.png`);
+    } catch (e2) {
+      return "";
+    }
+  }
+};
+
 const defaultProducts = [
   {
     name: "IPhone 15",
@@ -269,7 +292,7 @@ function Products() {
           <Card>
             <CardImg
               alt="Card image cap"
-              src={require(`assets/img/products/${products[selected].image}`)}
+              src={resolveImage(products[selected].image)}
               top
               width="100%"
             />
@@ -321,15 +344,30 @@ function Products() {
           {selected === null ? (
             <>
               {products.map((x, i) => (
-                <Col key={`${i}`} xs={12} md={6} lg={4}>
-                  <Card>
-                    <CardImg
-                      alt="Card image cap"
-                      src={require(`assets/img/products/${x.image}`)}
-                      top
-                      width="100%"
-                    />
-                    <CardBody>
+                <Col key={`${i}`} xs={12} md={6} lg={4} className="mb-4">
+                  <Card style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+                    <div
+                      style={{
+                        width: "100%",
+                        height: "240px",
+                        overflow: "hidden",
+                        background: "#f8f8f8",
+                        borderTopLeftRadius: 8,
+                        borderTopRightRadius: 8,
+                      }}
+                    >
+                      <img
+                        alt={x.name}
+                        src={resolveImage(x.image)}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          display: "block",
+                        }}
+                      />
+                    </div>
+                    <CardBody style={{ display: "flex", flexDirection: "column", flexGrow: 1 }}>
                       <CardTitle tag="h4" className="font-weight-bold">
                         {x.name}
                       </CardTitle>
@@ -339,7 +377,7 @@ function Products() {
                       >
                         Rs. {FormatNumber(x.price)}
                       </CardSubtitle>
-                      <CardText>{x.description}</CardText>
+                      <CardText style={{ flexGrow: 1 }}>{x.description}</CardText>
                       <div className="text-center mt-3">
                         <Button color="info" onClick={() => setselected(i)}>
                           Buy Now

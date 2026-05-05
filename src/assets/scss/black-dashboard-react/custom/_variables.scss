@@ -97,26 +97,26 @@ $default-color-opacity:      rgba(182, 182, 182, .6) !default;
 $orange-color:               #f96332 !default;
 
 $default:       #5a6a7a !default;
-$primary:       #E8A0BF !default;
+$primary:       #e8919f !default;
 $secondary:     #f4f5f7 !default;
 $success:       #2dce89 !default;
-$info:          #D4849A !default;
+$info:          #e8919f !default;
 $warning:       #ff8d72 !default;
-$danger:        #f5365c !default;
+$danger:        #d4556a !default;
 $black:         #3a3a3a !default;
 
 
 // gradient
 $default-states:       #4a5a6a !default;
-$primary-states:       #D48BA8 !default;
+$primary-states:       #d4808e !default;
 $success-states:       #24a46d !default;
-$info-states:          #C07388 !default;
+$info-states:          #d4808e !default;
 $warning-states:       #ff6491 !default;
-$danger-states:        #d4213c !default;
+$danger-states:        #c04050 !default;
 $black-states:         #2d2d2d !default;
 
-$background-black:           #fdf2f5 !default;
-$background-states-black:    #f8eaef !default;
+$background-black:           #f4b8c1 !default;
+$background-states-black:    #f0adb7 !default;
 
 // opacity
 $default-opacity:      rgba(182, 182, 182, .6) !default;
@@ -740,7 +740,7 @@ $navbar-nav-link-letter-spacing:    0 !default;
 $navbar-nav-link-border-radius:     $border-radius !default;
 
 /* navbar color */
-$navbar-color:                      #E8A0BF !default;
+$navbar-color:                      #d4808e !default;
 $navbar-dark-bg:                    transparent !default;
 $navbar-dark-hover-bg:              rgba(255, 255, 255, .1);
 $navbar-dark-active-bg:             rgba(255, 255, 255, .1);

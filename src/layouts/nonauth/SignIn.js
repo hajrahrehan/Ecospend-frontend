@@ -644,7 +644,7 @@ function SignInBasic() {
       <div
         className="content"
         style={{
-          background: `linear-gradient(rgba(253, 242, 245, 0.92), rgba(248, 234, 239, 0.75)), url(${bgImage})`,
+          background: `linear-gradient(rgba(244, 184, 193, 0.92), rgba(232, 145, 159, 0.8)), url(${bgImage})`,
           width: "100vw",
           minHeight: "100vh",
           backgroundPosition: "center",

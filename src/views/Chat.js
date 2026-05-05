@@ -88,7 +88,7 @@ function Chat() {
                   overflowY: "auto",
                   padding: "10px",
                   borderRadius: "8px",
-                  background: "#fdf2f5",
+                  background: "#f4b8c1",
                   marginBottom: "15px",
                 }}
               >
@@ -111,7 +111,7 @@ function Chat() {
                             ? "15px 15px 0 15px"
                             : "15px 15px 15px 0",
                         background:
-                          msg.role === "user" ? "#E8A0BF" : "#f3e0e8",
+                          msg.role === "user" ? "#e8919f" : "#f4b8c1",
                         color: msg.role === "user" ? "#fff" : "#3a3a3a",
                         fontSize: "14px",
                         lineHeight: "1.5",
@@ -123,7 +123,7 @@ function Chat() {
                           style={{
                             display: "block",
                             marginBottom: 4,
-                            color: "#D4849A",
+                            color: "#d4808e",
                           }}
                         >
                           EcoAI
@@ -145,7 +145,7 @@ function Chat() {
                       style={{
                         padding: "10px 15px",
                         borderRadius: "15px 15px 15px 0",
-                        background: "#f3e0e8",
+                        background: "#f4b8c1",
                         color: "#999",
                         fontSize: "14px",
                       }}
@@ -154,7 +154,7 @@ function Chat() {
                         style={{
                           display: "block",
                           marginBottom: 4,
-                          color: "#D4849A",
+                          color: "#d4808e",
                         }}
                       >
                         EcoAI

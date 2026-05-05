@@ -18,6 +18,7 @@ import "react-calendar/dist/Calendar.css";
 
 import ThemeContextWrapper from "./components/ThemeWrapper/ThemeWrapper";
 import BackgroundColorWrapper from "./components/BackgroundColorWrapper/BackgroundColorWrapper";
+import EcoAIWidget from "./components/EcoAIWidget/EcoAIWidget";
 
 ReactDOM.render(
   <ThemeContextWrapper>
@@ -32,6 +33,7 @@ ReactDOM.render(
           <Route path="/admin/*" element={<AdminAuth />} />
           <Route path="*" element={<Navigate to="/auth" replace />} />
         </Routes>
+        <EcoAIWidget />
       </BrowserRouter>
     </BackgroundColorWrapper>
   </ThemeContextWrapper>,

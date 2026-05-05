@@ -89,7 +89,7 @@ export async function UserInfo() {
 }
 
 export async function UserCards() {
-  return CreateFetch("GET", "user");
+  return CreateFetch("GET", "user/cards");
 }
 
 export async function UpdateEmail(body: { email: string }) {

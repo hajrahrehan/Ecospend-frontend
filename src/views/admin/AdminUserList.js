@@ -259,22 +259,34 @@ function Beneficiary() {
                           </td>
                           <td>
                             {!user.closed ? (
-                              <>
+                              <div style={{ display: "flex", gap: "8px" }}>
                                 <Button
-                                  className="btn-success"
+                                  size="sm"
+                                  style={{
+                                    background: "#a8d8b9",
+                                    border: "none",
+                                    color: "#2d5e3e",
+                                    fontWeight: 600,
+                                  }}
                                   onClick={() => setaccountSelected(user)}
                                 >
                                   Account Info
                                 </Button>
                                 <Button
-                                  className="ml-2 btn-danger"
+                                  size="sm"
+                                  style={{
+                                    background: "#f4b8c1",
+                                    border: "none",
+                                    color: "#8b2d3a",
+                                    fontWeight: 600,
+                                  }}
                                   onClick={() =>
                                     CloseAccountRef.current(true, user._id)
                                   }
                                 >
                                   Close Account
                                 </Button>
-                              </>
+                              </div>
                             ) : (
                               <>No Actions</>
                             )}

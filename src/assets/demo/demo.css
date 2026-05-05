@@ -2,6 +2,27 @@
   margin-bottom: 20px;
 }
 
+/* React DatePicker calendar fix - prevent clipping */
+.react-date-picker__calendar {
+  z-index: 9999 !important;
+}
+.react-date-picker__calendar--open {
+  position: absolute !important;
+  z-index: 9999 !important;
+}
+.react-calendar {
+  background: #fff !important;
+  border: 1px solid #e0d0d8 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
+  z-index: 9999 !important;
+}
+.react-date-picker__wrapper {
+  background: #fff;
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+
 .tim-white-buttons {
   background-color: #777777;
 }
